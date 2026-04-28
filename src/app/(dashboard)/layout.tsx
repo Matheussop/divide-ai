@@ -33,12 +33,12 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <DashboardNav className="mb-6 hidden md:block" />
+        <DashboardNav userRole={session?.user?.role} className="mb-6 hidden md:block" />
 
         <main className="flex-1">{children}</main>
       </div>
 
-      <BottomNav />
+      <BottomNav userRole={session?.user?.role} />
     </div>
   );
 }

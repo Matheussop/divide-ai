@@ -3,6 +3,28 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { getUserByEmail } from "@/lib/kv/users";
 import { loginSchema } from "@/lib/schemas";
+import type { DefaultSession } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role?: "admin" | "user";
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    id: string;
+    role?: "admin" | "user";
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role?: "admin" | "user";
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -28,6 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           name: user.nome,
           email: user.email,
+          role: user.role ?? "user",
         };
       },
     }),
@@ -39,12 +62,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && token.id) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     },

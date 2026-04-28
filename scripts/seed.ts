@@ -9,20 +9,30 @@ async function seed() {
   // Usuários
   const users: Array<Omit<User, "passwordHash"> & { password: string }> = [
     {
+      id: "admin-1",
+      nome: "Admin do Sistema",
+      email: "admin@divide.ai",
+      password: "admin",
+      role: "admin",
+    },
+    {
       id: "user-1",
       nome: "Morador 1",
       email: "morador1@divide.ai",
       password: "123456",
+      role: "user",
     },
     {
       id: "user-2",
       nome: "Morador 2",
       email: "morador2@divide.ai",
       password: "123456",
+      role: "user",
     },
   ];
 
   const emailIndex: Record<string, string> = {};
+  const usersList: string[] = [];
 
   for (const u of users) {
     const passwordHash = await hash(u.password, 12);
@@ -31,13 +41,16 @@ async function seed() {
       nome: u.nome,
       email: u.email,
       passwordHash,
+      role: u.role,
     };
     await setJSON(`users:${user.id}`, user);
     emailIndex[user.email] = user.id;
-    console.log(`  ✅ User: ${user.nome} (${user.email})`);
+    usersList.push(user.id);
+    console.log(`  ✅ User: ${user.nome} (${user.email}) - Role: ${user.role}`);
   }
 
   await setJSON("user-emails", emailIndex);
+  await setJSON("users-list", usersList);
 
   // Categorias padrão
   const categories: Category[] = [
@@ -60,6 +73,7 @@ async function seed() {
 
   console.log("\n✨ Seed completo!");
   console.log("\nCredenciais:");
+  console.log("  admin@divide.ai / admin");
   console.log("  morador1@divide.ai / 123456");
   console.log("  morador2@divide.ai / 123456");
 

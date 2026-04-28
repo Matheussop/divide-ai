@@ -10,6 +10,7 @@ import {
   Repeat,
   Tags,
   UsersRound,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,14 +35,20 @@ const compactItems = [
 export function DashboardNav({
   className,
   compact = false,
+  userRole,
 }: {
   className?: string;
   compact?: boolean;
+  userRole?: "admin" | "user";
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedMonth = searchParams.get("mes");
-  const navItems = compact ? compactItems : items;
+  
+  const baseItems = compact ? compactItems : items;
+  const navItems = userRole === "admin" 
+    ? [...baseItems, { href: "/usuarios", label: "Usuários", icon: ShieldAlert }]
+    : baseItems;
 
   return (
     <nav className={className}>
@@ -49,9 +56,10 @@ export function DashboardNav({
         className={cn(
           "border border-border/60 bg-card/85 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.45)]",
           compact
-            ? "grid grid-cols-5 gap-2 rounded-[1.75rem] p-2"
+            ? "grid gap-2 rounded-[1.75rem] p-2"
             : "flex flex-wrap gap-2 rounded-3xl p-2"
         )}
+        style={compact ? { gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` } : undefined}
       >
         {navItems.map((item) => {
           const Icon = item.icon;
