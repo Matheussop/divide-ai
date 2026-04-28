@@ -1,16 +1,33 @@
-import { PlaceholderPage } from "@/components/dashboard/placeholder-page";
+import { GuestsManager } from "@/components/dashboard/guests-manager";
+import { getGuests } from "@/lib/kv/guests";
+import { getDefaultUsers } from "@/lib/kv/users";
 
-export default function GuestsPage() {
+function getMonthKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function formatMonthLabel(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+}
+
+export default async function GuestsPage() {
+  const monthKey = getMonthKey();
+  const [guests, users] = await Promise.all([
+    getGuests(monthKey),
+    getDefaultUsers(),
+  ]);
+
   return (
-    <PlaceholderPage
-      eyebrow="Fase 2.5"
-      title="Visitas entram aqui para destravar a inteligência de divisão."
-      description="Esta seção vai concentrar período, host e preparação para o cálculo proporcional que aparece na Fase 3."
-      bullets={[
-        "Cadastro de visita com datas claras e vínculo ao morador anfitrião.",
-        "Leitura temporal para saber quais despesas caem dentro do período.",
-        "Base de dados pronta para o cálculo proporcional por dias de visita.",
-      ]}
+    <GuestsManager
+      monthLabel={formatMonthLabel(monthKey)}
+      guests={guests}
+      users={users}
     />
   );
 }

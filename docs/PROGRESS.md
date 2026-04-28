@@ -1,6 +1,6 @@
 # DivideAí — Progresso do Projeto
 
-> Última atualização: 28/04/2026 — Fase 2.3 validada
+> Última atualização: 28/04/2026 — Fase 2.5 validada
 
 ---
 
@@ -50,9 +50,9 @@
 | 2.2 | Dashboard mensal | 🔄 | Home autenticada com resumo do mês, categorias e últimos lançamentos |
 | 2.3 | CRUD de despesas | ✅ | Página /despesas funcional com criação, edição, exclusão e revalidação do dashboard |
 | 2.4 | CRUD de categorias | ⏳ | Nome + ícone lucide-react, customizáveis |
-| 2.5 | CRUD de visitas (guests) | ⏳ | Período data início/fim, vinculada a morador |
+| 2.5 | CRUD de visitas (guests) | ✅ | Página /visitas funcional com criação, edição, exclusão e validação de período |
 | 2.6 | Navegação de histórico mensal | ⏳ | Selector de mês, carregar dados do KV |
-| 2.7 | Server actions para cada entidade | 🔄 | expenses concluído; categories e guests pendentes |
+| 2.7 | Server actions para cada entidade | ✅ | expenses, categories e guests concluídos com validação + auth |
 | 2.8 | Categorias padrão no seed | ✅ | Seed já grava categorias padrão no Redis |
 
 ---
