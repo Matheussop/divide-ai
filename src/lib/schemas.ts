@@ -7,6 +7,11 @@ export const loginSchema = z.object({
 
 export const expenseSchema = z.object({
   valor: z.number().int().positive("Valor deve ser positivo"),
+  data: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato: YYYY-MM-DD")
+    .optional(),
+  visitaPolitica: z.enum(["none", "during", "month"]).optional(),
   descricao: z.string().min(1, "Descrição obrigatória").max(200),
   categoriaId: z.string().min(1),
   pagadorId: z.string().min(1),
@@ -32,4 +37,5 @@ export const recurringSchema = z.object({
   categoriaId: z.string().min(1),
   split: z.record(z.string(), z.number().min(0).max(100)),
   ativo: z.boolean(),
+  visitaPolitica: z.enum(["none", "during", "month"]).optional(),
 });

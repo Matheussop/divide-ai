@@ -4,8 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-nunito);
+  --font-heading: var(--font-nunito);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

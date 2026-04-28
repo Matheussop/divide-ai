@@ -14,6 +14,8 @@ export interface Category {
 export interface Expense {
   id: string;
   valor: number; // centavos
+  data?: string; // YYYY-MM-DD (data efetiva da despesa)
+  visitaPolitica?: "none" | "during" | "month";
   descricao: string;
   categoriaId: string;
   pagadorId: string;
@@ -39,6 +41,7 @@ export interface RecurringTemplate {
   categoriaId: string;
   split: Record<string, number>;
   ativo: boolean;
+  visitaPolitica?: "none" | "during" | "month";
 }
 
 export interface MonthlyBalance {

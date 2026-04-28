@@ -1,0 +1,98 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Banknote,
+  Beef,
+  Bike,
+  Book,
+  Briefcase,
+  Bus,
+  CalendarDays,
+  Car,
+  Cat,
+  CheckCircle2,
+  Coffee,
+  Dog,
+  Droplets,
+  Dumbbell,
+  Gamepad2,
+  Gift,
+  Handshake,
+  HeartPulse,
+  Home,
+  Hospital,
+  Lamp,
+  Laptop,
+  Music,
+  Package,
+  PawPrint,
+  Pizza,
+  Plane,
+  Plug,
+  ReceiptText,
+  Shield,
+  ShoppingBag,
+  ShoppingCart,
+  Smartphone,
+  Sparkles,
+  Ticket,
+  Train,
+  UtensilsCrossed,
+  Wifi,
+  Wrench,
+  Zap,
+} from "lucide-react";
+
+export type LucideIconOption = {
+  value: string; // persisted in redis as Category.icone
+  label: string; // pt-BR friendly label
+  icon: LucideIcon;
+};
+
+// Curated list for performance + good defaults.
+export const LUCIDE_ICON_OPTIONS: LucideIconOption[] = [
+  { value: "home", label: "Casa", icon: Home },
+  { value: "receipt-text", label: "Conta", icon: ReceiptText },
+  { value: "shopping-cart", label: "Mercado", icon: ShoppingCart },
+  { value: "shopping-bag", label: "Compras", icon: ShoppingBag },
+  { value: "utensils-crossed", label: "Alimentação", icon: UtensilsCrossed },
+  { value: "pizza", label: "Delivery", icon: Pizza },
+  { value: "coffee", label: "Café", icon: Coffee },
+  { value: "wifi", label: "Internet", icon: Wifi },
+  { value: "plug", label: "Eletrônicos", icon: Plug },
+  { value: "laptop", label: "Trabalho", icon: Laptop },
+  { value: "smartphone", label: "Celular", icon: Smartphone },
+  { value: "zap", label: "Energia", icon: Zap },
+  { value: "droplets", label: "Água", icon: Droplets },
+  { value: "wrench", label: "Manutenção", icon: Wrench },
+  { value: "briefcase", label: "Serviços", icon: Briefcase },
+  { value: "car", label: "Carro", icon: Car },
+  { value: "bike", label: "Bike", icon: Bike },
+  { value: "bus", label: "Ônibus", icon: Bus },
+  { value: "train", label: "Trem", icon: Train },
+  { value: "plane", label: "Viagem", icon: Plane },
+  { value: "calendar-days", label: "Assinaturas", icon: CalendarDays },
+  { value: "music", label: "Música", icon: Music },
+  { value: "gamepad-2", label: "Lazer", icon: Gamepad2 },
+  { value: "ticket", label: "Ingressos", icon: Ticket },
+  { value: "gift", label: "Presentes", icon: Gift },
+  { value: "sparkles", label: "Beleza", icon: Sparkles },
+  { value: "heart-pulse", label: "Saúde", icon: HeartPulse },
+  { value: "hospital", label: "Médico", icon: Hospital },
+  { value: "dumbbell", label: "Academia", icon: Dumbbell },
+  { value: "book", label: "Estudos", icon: Book },
+  { value: "banknote", label: "Financeiro", icon: Banknote },
+  { value: "shield", label: "Seguro", icon: Shield },
+  { value: "check-circle-2", label: "Acerto", icon: CheckCircle2 },
+  { value: "handshake", label: "Acordo", icon: Handshake },
+  { value: "package", label: "Outros", icon: Package },
+  { value: "lamp", label: "Casa (extras)", icon: Lamp },
+  { value: "paw-print", label: "Pet", icon: PawPrint },
+  { value: "cat", label: "Gato", icon: Cat },
+  { value: "dog", label: "Cachorro", icon: Dog },
+  { value: "beef", label: "Açougue", icon: Beef },
+];
+
+export const lucideIconMap = Object.fromEntries(
+  LUCIDE_ICON_OPTIONS.map((item) => [item.value, item.icon] as const)
+) as Record<string, LucideIcon>;
+
