@@ -1,33 +1,31 @@
-import { ExpensesManager } from "@/components/dashboard/expenses-manager";
+import { MonthlyReportPage } from "@/components/dashboard/monthly-report-page";
 import { getCategories } from "@/lib/kv/categories";
-import { getExpenses } from "@/lib/kv/expenses";
-import { getGuests } from "@/lib/kv/guests";
 import { getDefaultUsers } from "@/lib/kv/users";
+import { getExpenses } from "@/lib/kv/expenses";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 
-type ExpensesPageProps = {
+type ReportPageProps = {
   searchParams?: {
     mes?: string;
   };
 };
 
-export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+export default async function ReportPage({ searchParams }: ReportPageProps) {
   const monthKey = resolveMonthKey(searchParams?.mes);
-  const [categories, users, expenses, guests] = await Promise.all([
+  const [expenses, categories, users] = await Promise.all([
+    getExpenses(monthKey),
     getCategories(),
     getDefaultUsers(),
-    getExpenses(monthKey),
-    getGuests(monthKey),
   ]);
 
   return (
-    <ExpensesManager
+    <MonthlyReportPage
       monthKey={monthKey}
       monthLabel={formatMonthLabel(monthKey)}
+      expenses={expenses}
       categories={categories}
       users={users}
-      expenses={expenses}
-      guests={guests}
     />
   );
 }
+

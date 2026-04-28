@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -26,7 +27,8 @@ export default async function DashboardLayout({
               Seu painel mensal começa aqui.
             </p>
           </div>
-          <div className="hidden md:block">
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             <SignOutButton />
           </div>
         </header>

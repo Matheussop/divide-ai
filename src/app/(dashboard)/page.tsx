@@ -3,10 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getCategories } from "@/lib/kv/categories";
 import { getMonthsWithData } from "@/lib/kv/balances";
+import { getBalance } from "@/lib/kv/balances";
+import { getGuests } from "@/lib/kv/guests";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 import { getUserById } from "@/lib/kv/users";
-import type { Expense } from "@/types";
+import { computeOwedByUserForExpense } from "@/lib/finance/visits";
+import { prevMonthKey } from "@/lib/finance/balances";
+import type { Expense, Guest } from "@/types";
 
 function formatCurrency(valueInCents: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -15,7 +19,7 @@ function formatCurrency(valueInCents: number) {
   }).format(valueInCents / 100);
 }
 
-function calculateBalances(expenses: Expense[]) {
+function calculateBalances(expenses: Expense[], monthKey: string, guests: Guest[]) {
   const paidByUser: Record<string, number> = {};
   const owedByUser: Record<string, number> = {};
 
@@ -23,9 +27,9 @@ function calculateBalances(expenses: Expense[]) {
     paidByUser[expense.pagadorId] =
       (paidByUser[expense.pagadorId] ?? 0) + expense.valor;
 
-    for (const [userId, percent] of Object.entries(expense.split)) {
-      owedByUser[userId] =
-        (owedByUser[userId] ?? 0) + Math.round((expense.valor * percent) / 100);
+    const owedForExpense = computeOwedByUserForExpense(expense, monthKey, guests);
+    for (const [userId, amount] of Object.entries(owedForExpense)) {
+      owedByUser[userId] = (owedByUser[userId] ?? 0) + amount;
     }
   }
 
@@ -57,11 +61,18 @@ type DashboardHomePageProps = {
 
 export default async function DashboardHomePage({ searchParams }: DashboardHomePageProps) {
   const monthKey = resolveMonthKey(searchParams?.mes);
-  const [expenses, categories, monthsWithData] = await Promise.all([
+  const previousMonthKey = prevMonthKey(monthKey);
+  const [expenses, categories, monthsWithData, guestsThisMonth, guestsPrevMonth, previousBalance] =
+    await Promise.all([
     getExpenses(monthKey),
     getCategories(),
     getMonthsWithData(),
+    getGuests(monthKey),
+    getGuests(previousMonthKey),
+    getBalance(previousMonthKey),
   ]);
+  const guests = [...guestsThisMonth, ...guestsPrevMonth];
+  const saldoAnterior = previousBalance?.saldoFinal ?? 0;
 
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.valor, 0);
   const categoryMap = new Map(categories.map((category) => [category.id, category.nome]));
@@ -75,7 +86,7 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
-  const { paidByUser, owedByUser, sorted } = calculateBalances(expenses);
+  const { paidByUser, owedByUser, sorted } = calculateBalances(expenses, monthKey, guests);
   const leadingUserId = sorted[0]?.[0];
   const trailingUserId = sorted.at(-1)?.[0];
 
@@ -205,6 +216,33 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {trailingUser ? `${trailingUser.nome} está atrás na composição do mês.` : "Ainda sem contraste suficiente entre moradores."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.5rem] border border-border/60 bg-background/70 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Saldo anterior
+                    </p>
+                    <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-foreground">
+                      {formatCurrency(Math.abs(saldoAnterior))}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {saldoAnterior === 0
+                        ? "Sem pendências do mês anterior."
+                        : "Valor carregado do saldo final do mês anterior."}
+                    </p>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-border/60 bg-background/70 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Saldo acumulado (estimado)
+                    </p>
+                    <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-foreground">
+                      {formatCurrency(Math.abs(saldoAnterior + balanceGap))}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Soma do saldo anterior com a diferença atual do mês.
                     </p>
                   </div>
                 </div>
