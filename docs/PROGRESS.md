@@ -1,6 +1,6 @@
 # DivideAí — Progresso do Projeto
 
-> Última atualização: 28/04/2026 — Fase 1 concluída
+> Última atualização: 28/04/2026 — Fase 2.3 validada
 
 ---
 
@@ -46,14 +46,14 @@
 
 | # | Task | Status | Notas |
 |---|------|--------|-------|
-| 2.1 | Layout mobile (bottom nav bar) | ⏳ | `src/app/(dashboard)/layout.tsx`, nav com ícones |
-| 2.2 | Dashboard mensal | ⏳ | Total gasto, quanto cada um pagou, saldo |
-| 2.3 | CRUD de despesas | ⏳ | Formulário com slider de split, categorias |
+| 2.1 | Layout mobile (bottom nav bar) | ✅ | `src/app/(dashboard)/layout.tsx` com navegação inferior e header autenticado |
+| 2.2 | Dashboard mensal | 🔄 | Home autenticada com resumo do mês, categorias e últimos lançamentos |
+| 2.3 | CRUD de despesas | ✅ | Página /despesas funcional com criação, edição, exclusão e revalidação do dashboard |
 | 2.4 | CRUD de categorias | ⏳ | Nome + ícone lucide-react, customizáveis |
 | 2.5 | CRUD de visitas (guests) | ⏳ | Período data início/fim, vinculada a morador |
 | 2.6 | Navegação de histórico mensal | ⏳ | Selector de mês, carregar dados do KV |
-| 2.7 | Server actions para cada entidade | ⏳ | expenses, categories, guests (com validação zod + auth) |
-| 2.8 | Categorias padrão no seed | ⏳ | Aluguel, Mercado, Internet, Energia, Água, Lazer, Outros |
+| 2.7 | Server actions para cada entidade | 🔄 | expenses concluído; categories e guests pendentes |
+| 2.8 | Categorias padrão no seed | ✅ | Seed já grava categorias padrão no Redis |
 
 ---
 
@@ -93,7 +93,7 @@
 | # | Critério | Status |
 |---|----------|--------|
 | V1 | `npm run build` sem erros | ✅ |
-| V2 | Login com ambos os usuários | ⏳ |
+| V2 | Login com ambos os usuários | ✅ |
 | V3 | Despesa 50/50 e customizada → saldo correto | ⏳ |
 | V4 | Visita de 5 dias → cálculo 5/30 = 16.7% | ⏳ |
 | V5 | Despesa no período da visita → saldo correto | ⏳ |
@@ -136,9 +136,10 @@ divide-ai/
 
 ## Próximo Passo
 
-**Fase 2.1** → Implementar layout mobile do dashboard com bottom nav (`src/app/(dashboard)/layout.tsx`).
+**Fase 2.4** → Implementar CRUD de categorias para destravar personalização real da base de despesas.
 
 ## Observações Técnicas
 
 - Migração para Tailwind 4 concluída com Node 20.
 - Build está verde com `eslint.ignoreDuringBuilds` em `next.config.mjs` (ajuste temporário para avançar implementação).
+- Camada de dados migrada para Redis direto via `divide_ai_bd_REDIS_URL`.
