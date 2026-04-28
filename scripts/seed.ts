@@ -1,5 +1,6 @@
-import { kv } from "@vercel/kv";
+import "dotenv/config";
 import { hash } from "bcryptjs";
+import { setJSON } from "../src/lib/redis";
 import type { User, Category } from "../src/types";
 
 async function seed() {
@@ -31,12 +32,12 @@ async function seed() {
       email: u.email,
       passwordHash,
     };
-    await kv.set(`users:${user.id}`, user);
+    await setJSON(`users:${user.id}`, user);
     emailIndex[user.email] = user.id;
     console.log(`  ✅ User: ${user.nome} (${user.email})`);
   }
 
-  await kv.set("user-emails", emailIndex);
+  await setJSON("user-emails", emailIndex);
 
   // Categorias padrão
   const categories: Category[] = [
@@ -50,12 +51,12 @@ async function seed() {
     { id: "cat-8", nome: "Acerto", icone: "handshake" },
   ];
 
-  await kv.set("categories", categories);
+  await setJSON("categories", categories);
   console.log(`  ✅ ${categories.length} categorias criadas`);
 
   // Templates recorrentes iniciais
-  await kv.set("recurring", []);
-  await kv.set("months-with-data", []);
+  await setJSON("recurring", []);
+  await setJSON("months-with-data", []);
 
   console.log("\n✨ Seed completo!");
   console.log("\nCredenciais:");

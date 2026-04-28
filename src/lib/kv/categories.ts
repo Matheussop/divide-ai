@@ -1,12 +1,12 @@
-import { kv } from "@vercel/kv";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { Category } from "@/types";
 
 export async function getCategories(): Promise<Category[]> {
-  return (await kv.get<Category[]>("categories")) ?? [];
+  return (await getJSON<Category[]>("categories")) ?? [];
 }
 
 export async function setCategories(categories: Category[]): Promise<void> {
-  await kv.set("categories", categories);
+  await setJSON("categories", categories);
 }
 
 export async function addCategory(category: Category): Promise<void> {

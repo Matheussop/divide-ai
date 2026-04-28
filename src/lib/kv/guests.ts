@@ -1,17 +1,17 @@
-import { kv } from "@vercel/kv";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { Guest } from "@/types";
 
 const key = (month: string) => `guests:${month}`;
 
 export async function getGuests(month: string): Promise<Guest[]> {
-  return (await kv.get<Guest[]>(key(month))) ?? [];
+  return (await getJSON<Guest[]>(key(month))) ?? [];
 }
 
 export async function setGuests(
   month: string,
   guests: Guest[]
 ): Promise<void> {
-  await kv.set(key(month), guests);
+  await setJSON(key(month), guests);
 }
 
 export async function addGuest(month: string, guest: Guest): Promise<void> {

@@ -1,17 +1,17 @@
-import { kv } from "@vercel/kv";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { Expense } from "@/types";
 
 const key = (month: string) => `expenses:${month}`;
 
 export async function getExpenses(month: string): Promise<Expense[]> {
-  return (await kv.get<Expense[]>(key(month))) ?? [];
+  return (await getJSON<Expense[]>(key(month))) ?? [];
 }
 
 export async function setExpenses(
   month: string,
   expenses: Expense[]
 ): Promise<void> {
-  await kv.set(key(month), expenses);
+  await setJSON(key(month), expenses);
 }
 
 export async function addExpense(

@@ -6,7 +6,7 @@ App de divisão de despesas de apartamento para 2 moradores. Mobile-first, minim
 
 - **Next.js 14** (App Router, TypeScript)
 - **Tailwind CSS 3** + **shadcn/ui**
-- **Vercel KV** (Redis) — storage
+- **Redis** (via URL de conexão) — storage
 - **NextAuth.js v5** — autenticação (JWT, 2 usuários)
 - **zod** — validação
 - **xlsx/SheetJS** — export Excel
@@ -17,7 +17,7 @@ App de divisão de despesas de apartamento para 2 moradores. Mobile-first, minim
 ### Pré-requisitos
 
 - Node.js 18+
-- Conta na Vercel (para Vercel KV)
+- Instância Redis com URL de conexão
 
 ### Instalação
 
@@ -32,11 +32,8 @@ npm install
 Crie um arquivo `.env.local`:
 
 ```env
-# Vercel KV
-KV_URL=your-kv-url
-KV_REST_API_URL=your-kv-rest-api-url
-KV_REST_API_TOKEN=your-kv-rest-api-token
-KV_REST_API_READ_ONLY_TOKEN=your-kv-read-only-token
+# Redis
+divide_ai_bd_REDIS_URL=redis://user:password@host:port
 
 # NextAuth
 NEXTAUTH_SECRET=your-secret-here
@@ -71,7 +68,7 @@ src/
 ├── components/             # Componentes React
 │   └── ui/                 # shadcn/ui primitivos
 ├── lib/                    # Utilitários
-│   ├── kv/                 # Helpers Vercel KV
+│   ├── kv/                 # Helpers de acesso ao Redis
 │   ├── auth.ts             # Config NextAuth
 │   └── schemas.ts          # Zod schemas
 └── types/                  # TypeScript types
@@ -96,7 +93,7 @@ src/
 
 ## Deploy
 
-Deploy automático na Vercel. Vercel KV configurado como addon no projeto.
+Deploy automático na Vercel com variável de ambiente do Redis configurada no projeto.
 
 ```bash
 vercel --prod

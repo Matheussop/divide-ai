@@ -1,8 +1,8 @@
 ---
-description: "Use when working with Vercel KV data access layer in src/lib/kv/. Covers key conventions, JSON serialization, typed helpers, and data access patterns."
+description: "Use when working with Redis data access layer in src/lib/kv/. Covers key conventions, JSON serialization, typed helpers, and data access patterns."
 applyTo: "src/lib/kv/**"
 ---
-# Vercel KV Data Access Guidelines
+# Redis Data Access Guidelines
 
 ## Key Conventions
 - `users:{id}` — user data (hash)
@@ -19,17 +19,17 @@ applyTo: "src/lib/kv/**"
 
 ## Pattern
 ```typescript
-import { kv } from "@vercel/kv";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { Expense } from "@/types";
 
 const key = (month: string) => `expenses:${month}`;
 
 export async function getExpenses(month: string): Promise<Expense[]> {
-  return (await kv.get<Expense[]>(key(month))) ?? [];
+  return (await getJSON<Expense[]>(key(month))) ?? [];
 }
 
 export async function setExpenses(month: string, expenses: Expense[]): Promise<void> {
-  await kv.set(key(month), expenses);
+  await setJSON(key(month), expenses);
 }
 ```
 
@@ -38,4 +38,4 @@ export async function setExpenses(month: string, expenses: Expense[]): Promise<v
 - Month format: `YYYY-MM` (e.g., `2026-04`)
 - IDs: use `crypto.randomUUID()`
 - Timestamps: ISO 8601 strings
-- Never expose KV client directly to components — always go through helpers
+- Never expose Redis client directly to components — always go through helpers

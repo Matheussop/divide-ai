@@ -1,14 +1,14 @@
-import { kv } from "@vercel/kv";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { RecurringTemplate } from "@/types";
 
 export async function getRecurring(): Promise<RecurringTemplate[]> {
-  return (await kv.get<RecurringTemplate[]>("recurring")) ?? [];
+  return (await getJSON<RecurringTemplate[]>("recurring")) ?? [];
 }
 
 export async function setRecurring(
   templates: RecurringTemplate[]
 ): Promise<void> {
-  await kv.set("recurring", templates);
+  await setJSON("recurring", templates);
 }
 
 export async function addRecurring(
