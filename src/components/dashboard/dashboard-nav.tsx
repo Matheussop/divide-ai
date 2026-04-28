@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CalendarRange,
   CircleDollarSign,
@@ -27,6 +27,8 @@ export function DashboardNav({
   compact?: boolean;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedMonth = searchParams.get("mes");
 
   return (
     <nav className={className}>
@@ -41,11 +43,14 @@ export function DashboardNav({
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
+          const href = selectedMonth
+            ? `${item.href}?mes=${encodeURIComponent(selectedMonth)}`
+            : item.href;
 
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={href}
               className={cn(
                 "flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-medium tracking-[0.02em] transition-all",
                 compact && "min-h-14 flex-col gap-1 px-1 text-[11px]",

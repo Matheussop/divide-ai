@@ -7,6 +7,7 @@ import {
   deleteGuestAction,
   updateGuestAction,
 } from "@/app/actions/guests";
+import { MonthSelector } from "@/components/dashboard/month-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import type { Guest, User } from "@/types";
 import { useRouter } from "next/navigation";
 
 interface GuestsManagerProps {
+  monthKey: string;
   monthLabel: string;
   guests: Guest[];
   users: User[];
@@ -51,7 +53,7 @@ function daysBetween(startDate: string, endDate: string) {
   return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
 }
 
-export function GuestsManager({ monthLabel, guests, users }: GuestsManagerProps) {
+export function GuestsManager({ monthKey, monthLabel, guests, users }: GuestsManagerProps) {
   const router = useRouter();
   const [form, setForm] = useState(() => emptyState(users));
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -78,8 +80,8 @@ export function GuestsManager({ monthLabel, guests, users }: GuestsManagerProps)
     void (async () => {
       try {
         const result = editingId
-          ? await updateGuestAction(editingId, form)
-          : await createGuestAction(form);
+          ? await updateGuestAction(editingId, form, monthKey)
+          : await createGuestAction(form, monthKey);
 
         if (!result.success) {
           setFeedback(result.error ?? "Nao foi possivel salvar a visita.");
@@ -118,7 +120,7 @@ export function GuestsManager({ monthLabel, guests, users }: GuestsManagerProps)
 
     void (async () => {
       try {
-        const result = await deleteGuestAction(guestId);
+        const result = await deleteGuestAction(guestId, monthKey);
         if (!result.success) {
           setFeedback(result.error ?? "Nao foi possivel excluir a visita.");
           setSubmitting(false);
@@ -152,15 +154,18 @@ export function GuestsManager({ monthLabel, guests, users }: GuestsManagerProps)
               Controle as visitas para destravar a divisao proporcional.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Registre periodo e anfitriao de cada visita para preparar os calculos das proximas fases.
+              Registre periodo e anfitriao no mes selecionado para preparar os calculos das proximas fases.
             </p>
           </div>
-          <div className="rounded-3xl border border-border/60 bg-background/75 px-4 py-3 text-right backdrop-blur-sm">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              visitas no mes
-            </div>
-            <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-foreground">
-              {guests.length}
+          <div className="flex flex-col items-end gap-3">
+            <MonthSelector monthKey={monthKey} />
+            <div className="rounded-3xl border border-border/60 bg-background/75 px-4 py-3 text-right backdrop-blur-sm">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                visitas no mes
+              </div>
+              <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-foreground">
+                {guests.length}
+              </div>
             </div>
           </div>
         </div>

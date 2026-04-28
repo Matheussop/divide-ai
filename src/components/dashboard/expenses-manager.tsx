@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthSelector } from "@/components/dashboard/month-selector";
 import { cn } from "@/lib/utils";
 import type { Category, Expense, User } from "@/types";
 import { useRouter } from "next/navigation";
 
 interface ExpensesManagerProps {
+  monthKey: string;
   monthLabel: string;
   categories: Category[];
   users: User[];
@@ -57,6 +59,7 @@ function formatTimestamp(value: string) {
 }
 
 export function ExpensesManager({
+  monthKey,
   monthLabel,
   categories,
   users,
@@ -93,8 +96,8 @@ export function ExpensesManager({
     void (async () => {
       try {
         const result = editingId
-          ? await updateExpenseAction(editingId, form)
-          : await createExpenseAction(form);
+          ? await updateExpenseAction(editingId, form, monthKey)
+          : await createExpenseAction(form, monthKey);
 
         if (!result.success) {
           setFeedback(result.error ?? "Não foi possível salvar a despesa.");
@@ -127,7 +130,7 @@ export function ExpensesManager({
   }
 
   function handleDelete(expenseId: string) {
-    const confirmed = window.confirm("Excluir esta despesa do mês atual?");
+    const confirmed = window.confirm("Excluir esta despesa do mes selecionado?");
     if (!confirmed) return;
 
     setSubmitting(true);
@@ -135,7 +138,7 @@ export function ExpensesManager({
 
     void (async () => {
       try {
-        const result = await deleteExpenseAction(expenseId);
+        const result = await deleteExpenseAction(expenseId, monthKey);
         if (!result.success) {
           setFeedback(result.error ?? "Não foi possível excluir a despesa.");
           setSubmitting(false);
@@ -171,15 +174,18 @@ export function ExpensesManager({
               Cadastro rápido para não deixar a conta escapar.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Esta tela já grava no Redis do mês atual, calcula o split entre moradores e alimenta o dashboard automaticamente.
+              Esta tela grava no Redis do mes selecionado, calcula o split entre moradores e alimenta o dashboard automaticamente.
             </p>
           </div>
-          <div className="rounded-3xl border border-border/60 bg-background/75 px-4 py-3 text-right backdrop-blur-sm">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              total do mês
-            </div>
-            <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-foreground">
-              {formatCurrency(totalSpent)}
+          <div className="flex flex-col items-end gap-3">
+            <MonthSelector monthKey={monthKey} />
+            <div className="rounded-3xl border border-border/60 bg-background/75 px-4 py-3 text-right backdrop-blur-sm">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                total do mes
+              </div>
+              <div className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-foreground">
+                {formatCurrency(totalSpent)}
+              </div>
             </div>
           </div>
         </div>
@@ -327,7 +333,7 @@ export function ExpensesManager({
           <CardContent className="space-y-3">
             {expenses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm leading-6 text-muted-foreground">
-                Nenhuma despesa cadastrada ainda. Use o formulário ao lado para alimentar o dashboard.
+                Nenhuma despesa cadastrada para este mes. Use o formulario ao lado para alimentar o dashboard.
               </div>
             ) : (
               expenses

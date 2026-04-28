@@ -3,28 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getCategories } from "@/lib/kv/categories";
 import { getMonthsWithData } from "@/lib/kv/balances";
+import { MonthSelector } from "@/components/dashboard/month-selector";
+import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 import { getUserById } from "@/lib/kv/users";
 import type { Expense } from "@/types";
-
-function getMonthKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
 
 function formatCurrency(valueInCents: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(valueInCents / 100);
-}
-
-function formatMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
 }
 
 function calculateBalances(expenses: Expense[]) {
@@ -61,8 +49,14 @@ function calculateBalances(expenses: Expense[]) {
   };
 }
 
-export default async function DashboardHomePage() {
-  const monthKey = getMonthKey();
+type DashboardHomePageProps = {
+  searchParams?: {
+    mes?: string;
+  };
+};
+
+export default async function DashboardHomePage({ searchParams }: DashboardHomePageProps) {
+  const monthKey = resolveMonthKey(searchParams?.mes);
   const [expenses, categories, monthsWithData] = await Promise.all([
     getExpenses(monthKey),
     getCategories(),
@@ -111,15 +105,20 @@ export default async function DashboardHomePage() {
               Você já está autenticado e o núcleo da Fase 2 começou pela visão mensal, pronta para receber despesas, categorias e visitas.
             </p>
           </div>
-          <div className="hidden rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-right md:block">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
-              meses com dados
-            </div>
-            <div className="mt-1 text-3xl font-semibold tracking-[-0.04em]">
-              {monthsWithData.length}
+          <div className="flex items-start gap-3">
+            <MonthSelector monthKey={monthKey} dark className="hidden md:block" />
+            <div className="hidden rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3 text-right md:block">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
+                meses com dados
+              </div>
+              <div className="mt-1 text-3xl font-semibold tracking-[-0.04em]">
+                {monthsWithData.length}
+              </div>
             </div>
           </div>
         </div>
+
+        <MonthSelector monthKey={monthKey} dark className="mt-4 md:hidden" />
 
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="rounded-[1.5rem] border border-white/10 bg-white/8 text-white ring-0 backdrop-blur-sm">
@@ -181,7 +180,7 @@ export default async function DashboardHomePage() {
           <CardContent className="space-y-4">
             {expenses.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-border/80 bg-background/70 p-5 text-sm leading-6 text-muted-foreground">
-                Ainda não há despesas em {formatMonthLabel(monthKey)}. A estrutura do dashboard já está pronta; o próximo passo é conectar o CRUD de despesas e alimentar esta visão automaticamente.
+                Ainda não há despesas em {formatMonthLabel(monthKey)}. Cadastre lançamentos na página de despesas para alimentar esta visão automaticamente.
               </div>
             ) : (
               <>

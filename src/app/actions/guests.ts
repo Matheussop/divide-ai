@@ -5,9 +5,9 @@ import { auth } from "@/lib/auth";
 import {
   addGuest,
   deleteGuest,
-  getGuests,
   updateGuest,
 } from "@/lib/kv/guests";
+import { resolveMonthKey } from "@/lib/month";
 import { guestSchema } from "@/lib/schemas";
 import type { ActionResult, Guest } from "@/types";
 
@@ -16,12 +16,6 @@ interface GuestActionInput {
   hostId: string;
   dataInicio: string;
   dataFim: string;
-}
-
-function getMonthKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
 }
 
 function revalidateGuestViews() {
@@ -54,7 +48,8 @@ function validateGuestPeriod(dataInicio: string, dataFim: string): string | null
 }
 
 export async function createGuestAction(
-  input: GuestActionInput
+  input: GuestActionInput,
+  monthKeyInput?: string
 ): Promise<ActionResult<Guest>> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -79,14 +74,15 @@ export async function createGuestAction(
     dataFim: parsed.data.dataFim,
   };
 
-  await addGuest(getMonthKey(), guest);
+  await addGuest(resolveMonthKey(monthKeyInput), guest);
   revalidateGuestViews();
   return { success: true, data: guest };
 }
 
 export async function updateGuestAction(
   guestId: string,
-  input: GuestActionInput
+  input: GuestActionInput,
+  monthKeyInput?: string
 ): Promise<ActionResult<Guest>> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -103,7 +99,7 @@ export async function updateGuestAction(
     return { success: false, error: periodError };
   }
 
-  const updated = await updateGuest(getMonthKey(), guestId, {
+  const updated = await updateGuest(resolveMonthKey(monthKeyInput), guestId, {
     nome: parsed.data.nome,
     hostId: parsed.data.hostId,
     dataInicio: parsed.data.dataInicio,
@@ -119,14 +115,15 @@ export async function updateGuestAction(
 }
 
 export async function deleteGuestAction(
-  guestId: string
+  guestId: string,
+  monthKeyInput?: string
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, error: "Nao autorizado" };
   }
 
-  const deleted = await deleteGuest(getMonthKey(), guestId);
+  const deleted = await deleteGuest(resolveMonthKey(monthKeyInput), guestId);
   if (!deleted) {
     return { success: false, error: "Visita nao encontrada." };
   }

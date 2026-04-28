@@ -3,14 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { addExpense, deleteExpense, getExpenses, setExpenses } from "@/lib/kv/expenses";
+import { resolveMonthKey } from "@/lib/month";
 import { expenseSchema } from "@/lib/schemas";
 import type { ActionResult, Expense } from "@/types";
-
-function getMonthKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
 
 function revalidateExpenseViews() {
   revalidatePath("/");
@@ -44,7 +39,8 @@ function parseExpenseInput(input: ExpenseActionInput) {
 }
 
 export async function createExpenseAction(
-  input: ExpenseActionInput
+  input: ExpenseActionInput,
+  monthKeyInput?: string
 ): Promise<ActionResult<Expense>> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -62,6 +58,7 @@ export async function createExpenseAction(
   }
 
   const now = new Date().toISOString();
+  const monthKey = resolveMonthKey(monthKeyInput);
   const expense: Expense = {
     id: crypto.randomUUID(),
     descricao: parsed.data.descricao,
@@ -74,14 +71,15 @@ export async function createExpenseAction(
     atualizadoEm: now,
   };
 
-  await addExpense(getMonthKey(), expense);
+  await addExpense(monthKey, expense);
   revalidateExpenseViews();
   return { success: true, data: expense };
 }
 
 export async function updateExpenseAction(
   expenseId: string,
-  input: ExpenseActionInput
+  input: ExpenseActionInput,
+  monthKeyInput?: string
 ): Promise<ActionResult<Expense>> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -98,7 +96,7 @@ export async function updateExpenseAction(
     return { success: false, error: "O split precisa somar 100%." };
   }
 
-  const monthKey = getMonthKey();
+  const monthKey = resolveMonthKey(monthKeyInput);
   const expenses = await getExpenses(monthKey);
   const index = expenses.findIndex((expense) => expense.id === expenseId);
   if (index === -1) {
@@ -122,14 +120,15 @@ export async function updateExpenseAction(
 }
 
 export async function deleteExpenseAction(
-  expenseId: string
+  expenseId: string,
+  monthKeyInput?: string
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, error: "Não autorizado" };
   }
 
-  const deleted = await deleteExpense(getMonthKey(), expenseId);
+  const deleted = await deleteExpense(resolveMonthKey(monthKeyInput), expenseId);
   if (!deleted) {
     return { success: false, error: "Despesa não encontrada." };
   }

@@ -2,23 +2,16 @@ import { ExpensesManager } from "@/components/dashboard/expenses-manager";
 import { getCategories } from "@/lib/kv/categories";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getDefaultUsers } from "@/lib/kv/users";
+import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 
-function getMonthKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
+type ExpensesPageProps = {
+  searchParams?: {
+    mes?: string;
+  };
+};
 
-function formatMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
-}
-
-export default async function ExpensesPage() {
-  const monthKey = getMonthKey();
+export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  const monthKey = resolveMonthKey(searchParams?.mes);
   const [categories, users, expenses] = await Promise.all([
     getCategories(),
     getDefaultUsers(),
@@ -27,6 +20,7 @@ export default async function ExpensesPage() {
 
   return (
     <ExpensesManager
+      monthKey={monthKey}
       monthLabel={formatMonthLabel(monthKey)}
       categories={categories}
       users={users}

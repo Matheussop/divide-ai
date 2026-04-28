@@ -1,23 +1,16 @@
 import { GuestsManager } from "@/components/dashboard/guests-manager";
 import { getGuests } from "@/lib/kv/guests";
 import { getDefaultUsers } from "@/lib/kv/users";
+import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 
-function getMonthKey(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
+type GuestsPageProps = {
+  searchParams?: {
+    mes?: string;
+  };
+};
 
-function formatMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
-}
-
-export default async function GuestsPage() {
-  const monthKey = getMonthKey();
+export default async function GuestsPage({ searchParams }: GuestsPageProps) {
+  const monthKey = resolveMonthKey(searchParams?.mes);
   const [guests, users] = await Promise.all([
     getGuests(monthKey),
     getDefaultUsers(),
@@ -25,6 +18,7 @@ export default async function GuestsPage() {
 
   return (
     <GuestsManager
+      monthKey={monthKey}
       monthLabel={formatMonthLabel(monthKey)}
       guests={guests}
       users={users}
