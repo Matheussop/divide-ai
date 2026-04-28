@@ -1,19 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Gamepad2,
-  Handshake,
-  Home,
-  Package,
-  Pencil,
-  Plus,
-  ShoppingCart,
-  Trash2,
-  Wifi,
-  Zap,
-  Droplets,
-} from "lucide-react";
+import { Package, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createCategoryAction,
   deleteCategoryAction,
@@ -23,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconPicker } from "@/components/ui/icon-picker";
+import { LUCIDE_ICON_OPTIONS, lucideIconMap } from "@/lib/lucide-icons";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
 import { useRouter } from "next/navigation";
@@ -36,22 +26,9 @@ interface CategoryFormState {
   icone: string;
 }
 
-const ICON_OPTIONS = [
-  { value: "home", label: "Casa", icon: Home },
-  { value: "shopping-cart", label: "Mercado", icon: ShoppingCart },
-  { value: "wifi", label: "Internet", icon: Wifi },
-  { value: "zap", label: "Energia", icon: Zap },
-  { value: "droplets", label: "Agua", icon: Droplets },
-  { value: "gamepad-2", label: "Lazer", icon: Gamepad2 },
-  { value: "package", label: "Outros", icon: Package },
-  { value: "handshake", label: "Acerto", icon: Handshake },
-];
-
-const iconMap = Object.fromEntries(ICON_OPTIONS.map((item) => [item.value, item.icon]));
-
 const initialForm: CategoryFormState = {
   nome: "",
-  icone: ICON_OPTIONS[0].value,
+  icone: LUCIDE_ICON_OPTIONS[0]?.value ?? "package",
 };
 
 export function CategoriesManager({ categories }: CategoriesManagerProps) {
@@ -194,20 +171,15 @@ export function CategoriesManager({ categories }: CategoriesManagerProps) {
                 <Label htmlFor="category-icon" className="text-sm font-semibold text-foreground">
                   Icone
                 </Label>
-                <select
-                  id="category-icon"
+                <IconPicker
+                  label="Ícone"
                   value={form.icone}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, icone: event.target.value }))
+                  onChange={(nextValue) =>
+                    setForm((current) => ({ ...current, icone: nextValue }))
                   }
-                  className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                >
-                  {ICON_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={LUCIDE_ICON_OPTIONS}
+                  disabled={submitting}
+                />
               </div>
 
               {feedback ? (
@@ -241,7 +213,7 @@ export function CategoriesManager({ categories }: CategoriesManagerProps) {
               </div>
             ) : (
               sortedCategories.map((category) => {
-                const Icon = iconMap[category.icone] ?? Package;
+                const Icon = lucideIconMap[category.icone] ?? Package;
 
                 return (
                   <div key={category.id} className="rounded-3xl border border-border/60 bg-background/70 p-4">

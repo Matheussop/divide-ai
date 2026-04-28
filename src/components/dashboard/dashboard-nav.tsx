@@ -6,6 +6,8 @@ import {
   CalendarRange,
   CircleDollarSign,
   House,
+  PieChart,
+  Repeat,
   Tags,
   UsersRound,
 } from "lucide-react";
@@ -14,7 +16,17 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/", label: "Resumo", icon: House },
   { href: "/despesas", label: "Despesas", icon: CircleDollarSign },
+  { href: "/recorrentes", label: "Recorrentes", icon: Repeat },
+  { href: "/relatorio", label: "Relatório", icon: PieChart },
   { href: "/categorias", label: "Categorias", icon: Tags },
+  { href: "/visitas", label: "Visitas", icon: UsersRound },
+  { href: "/historico", label: "Histórico", icon: CalendarRange },
+];
+
+const compactItems = [
+  { href: "/", label: "Resumo", icon: House },
+  { href: "/despesas", label: "Despesas", icon: CircleDollarSign },
+  { href: "/relatorio", label: "Relatório", icon: PieChart },
   { href: "/visitas", label: "Visitas", icon: UsersRound },
   { href: "/historico", label: "Histórico", icon: CalendarRange },
 ];
@@ -29,6 +41,7 @@ export function DashboardNav({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedMonth = searchParams.get("mes");
+  const navItems = compact ? compactItems : items;
 
   return (
     <nav className={className}>
@@ -40,7 +53,7 @@ export function DashboardNav({
             : "flex flex-wrap gap-2 rounded-3xl p-2"
         )}
       >
-        {items.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           const href = selectedMonth

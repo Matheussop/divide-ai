@@ -7,13 +7,15 @@ import {
   deleteExpenseAction,
   updateExpenseAction,
 } from "@/app/actions/expenses";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { computeVisitorCostForExpense } from "@/lib/finance/visits";
 import { cn } from "@/lib/utils";
-import type { Category, Expense, User } from "@/types";
+import type { Category, Expense, Guest, User } from "@/types";
 import { useRouter } from "next/navigation";
 
 interface ExpensesManagerProps {
@@ -22,10 +24,13 @@ interface ExpensesManagerProps {
   categories: Category[];
   users: User[];
   expenses: Expense[];
+  guests: Guest[];
 }
 
 interface ExpenseFormState {
   amount: string;
+  data: string;
+  visitaPolitica: "none" | "during" | "month";
   descricao: string;
   categoriaId: string;
   pagadorId: string;
@@ -35,6 +40,8 @@ interface ExpenseFormState {
 
 const emptyState = (categories: Category[], users: User[]): ExpenseFormState => ({
   amount: "",
+  data: new Date().toISOString().slice(0, 10),
+  visitaPolitica: "during",
   descricao: "",
   categoriaId: categories[0]?.id ?? "",
   pagadorId: users[0]?.id ?? "",
@@ -58,12 +65,21 @@ function formatTimestamp(value: string) {
   }).format(new Date(value));
 }
 
+function formatExpenseDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(year, month - 1, day));
+}
+
 export function ExpensesManager({
   monthKey,
   monthLabel,
   categories,
   users,
   expenses,
+  guests,
 }: ExpensesManagerProps) {
   const router = useRouter();
   const [form, setForm] = useState(() => emptyState(categories, users));
@@ -73,6 +89,8 @@ export function ExpensesManager({
 
   const categoryMap = new Map(categories.map((category) => [category.id, category.nome]));
   const userMap = new Map(users.map((user) => [user.id, user.nome]));
+
+  const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
 
   function resetForm() {
     setForm(emptyState(categories, users));
@@ -121,6 +139,8 @@ export function ExpensesManager({
     setFeedback("");
     setForm({
       amount: (expense.valor / 100).toFixed(2).replace(".", ","),
+      data: expense.data ?? expense.criadoEm.slice(0, 10),
+      visitaPolitica: expense.visitaPolitica ?? "during",
       descricao: expense.descricao,
       categoriaId: expense.categoriaId,
       pagadorId: expense.pagadorId,
@@ -200,6 +220,48 @@ export function ExpensesManager({
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="mb-5 rounded-3xl border border-border/60 bg-background/70 p-4">
+              <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
+                Como preencher
+              </p>
+              <div className="mt-3 grid gap-2 text-sm leading-6 text-muted-foreground">
+                <p>
+                  <span className="font-semibold text-foreground">Valor</span>: o total pago nesta compra/conta.
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Data da despesa</span>: quando a despesa vale (use a data real do gasto/conta — isso afeta visita).
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Descrição</span>: um resumo pra facilitar achar depois (ex.: “aluguel”, “mercado”, “internet”).
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Como a visita entra</span>:
+                  <span className="ml-1 inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground">
+                      Ignorar
+                    </span>
+                    <span className="text-xs">→ pontual (ex.: mercado).</span>
+                    <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground">
+                      Durante a visita
+                    </span>
+                    <span className="text-xs">→ só se a data cair no período.</span>
+                    <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground">
+                      Mês inteiro
+                    </span>
+                    <span className="text-xs">→ mensal (ex.: aluguel).</span>
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Categoria</span>: agrupa no dashboard/relatórios.
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Quem pagou</span>: quem desembolsou no momento.
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Split</span>: divisão base entre moradores (a visita ajusta por cima conforme a opção escolhida).
+                </p>
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -215,6 +277,21 @@ export function ExpensesManager({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="data" className="text-sm font-semibold text-foreground">Data da despesa</Label>
+                  <Input
+                    id="data"
+                    type="date"
+                    value={form.data}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, data: event.target.value }))
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="descricao" className="text-sm font-semibold text-foreground">Descrição</Label>
                   <Input
                     id="descricao"
@@ -225,6 +302,29 @@ export function ExpensesManager({
                     }
                     required
                   />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="visitaPolitica" className="text-sm font-semibold text-foreground">
+                    Como a visita entra nessa despesa
+                  </Label>
+                  <select
+                    id="visitaPolitica"
+                    value={form.visitaPolitica}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        visitaPolitica: event.target.value as ExpenseFormState["visitaPolitica"],
+                      }))
+                    }
+                    className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                  >
+                    <option value="none">Ignorar visita (pontual, ex.: mercado)</option>
+                    <option value="during">Só durante o período da visita (pontual)</option>
+                    <option value="month">Ratear no mês inteiro (ex.: aluguel)</option>
+                  </select>
                 </div>
               </div>
 
@@ -346,14 +446,40 @@ export function ExpensesManager({
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {expense.descricao}
-                        </p>
+                        {(() => {
+                          const visitor = computeVisitorCostForExpense(expense, monthKey, guests);
+                          if (!visitor) return null;
+
+                          const guest = guestMap.get(visitor.guestId);
+                          const guestName = guest?.nome ?? "Visita";
+                          const hostName = userMap.get(visitor.hostId) ?? visitor.hostId;
+                          const policy = expense.visitaPolitica ?? "during";
+
+                          return (
+                            <p className="mb-2 text-xs font-medium text-sky-700 dark:text-sky-200">
+                              Visita ({guestName}) repassou {formatCurrency(visitor.visitorCost)} para {hostName}
+                              {policy === "month" ? " (mês inteiro)" : " (durante a visita)"}
+                            </p>
+                          );
+                        })()}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {expense.descricao}
+                          </p>
+                          {expense.visitaId ? (
+                            <Badge
+                              variant="secondary"
+                              className="border border-sky-500/20 bg-sky-500/10 text-sky-700 dark:bg-sky-500/15 dark:text-sky-200"
+                            >
+                              Com visita
+                            </Badge>
+                          ) : null}
+                        </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {categoryMap.get(expense.categoriaId) ?? "Sem categoria"} · pago por {userMap.get(expense.pagadorId) ?? expense.pagadorId}
                         </p>
                         <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                          split {expense.split["user-1"] ?? 0}% / {expense.split["user-2"] ?? 0}% · {formatTimestamp(expense.criadoEm)}
+                          split {expense.split["user-1"] ?? 0}% / {expense.split["user-2"] ?? 0}% · {formatExpenseDate(expense.data ?? expense.criadoEm.slice(0, 10))}
                         </p>
                       </div>
 
