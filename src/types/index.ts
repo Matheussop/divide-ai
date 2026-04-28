@@ -1,0 +1,63 @@
+export interface User {
+  id: string;
+  nome: string;
+  email: string;
+  passwordHash: string;
+}
+
+export interface Category {
+  id: string;
+  nome: string;
+  icone: string;
+}
+
+export interface Expense {
+  id: string;
+  valor: number; // centavos
+  descricao: string;
+  categoriaId: string;
+  pagadorId: string;
+  split: Record<string, number>; // { [userId]: porcentagem 0-100 }
+  visitaId?: string;
+  criadoPor: string;
+  criadoEm: string; // ISO 8601
+  atualizadoEm: string;
+}
+
+export interface Guest {
+  id: string;
+  nome: string;
+  hostId: string;
+  dataInicio: string; // YYYY-MM-DD
+  dataFim: string;
+}
+
+export interface RecurringTemplate {
+  id: string;
+  descricao: string;
+  valor: number; // centavos
+  categoriaId: string;
+  split: Record<string, number>;
+  ativo: boolean;
+}
+
+export interface MonthlyBalance {
+  mes: string; // YYYY-MM
+  saldoAnterior: number; // centavos
+  totalGasto: number;
+  porPessoa: Record<
+    string,
+    {
+      pagou: number;
+      deve: number;
+    }
+  >;
+  saldoFinal: number; // positivo = user1 deve para user2
+  calculadoEm: string;
+}
+
+export type ActionResult<T = undefined> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
