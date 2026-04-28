@@ -52,7 +52,7 @@ export function resolveBestGuestForMonth(guests: Guest[], monthKey: string, visi
 }
 
 export function computeVisitorCostForExpense(
-  expense: Pick<Expense, "valor" | "data" | "criadoEm" | "visitaPolitica" | "visitaId">,
+  expense: Pick<Expense, "valor" | "data" | "criadoEm" | "visitaPolitica" | "visitaId" | "split">,
   monthKey: string,
   guests: Guest[]
 ): { visitorCost: number; hostId: string; guestId: string } | null {
@@ -76,7 +76,11 @@ export function computeVisitorCostForExpense(
   const daysOfVisitInMonth = overlapDaysInclusive(guestStart, guestEnd, monthStart, monthEnd);
   if (daysOfVisitInMonth <= 0) return null;
 
-  const visitorCost = Math.round((expense.valor * daysOfVisitInMonth) / daysInMonth);
+  const numberOfResidents = Object.keys(expense.split).length || 2;
+  const visitorCost = Math.round(
+    (expense.valor * (daysOfVisitInMonth / daysInMonth)) / (numberOfResidents + 1)
+  );
+
   return { visitorCost, hostId: guest.hostId, guestId: guest.id };
 }
 
