@@ -1,6 +1,6 @@
 # DivideAí — Progresso do Projeto
 
-> Última atualização: 28/04/2026 — Fase 2.6 validada
+> Última atualização: 28/04/2026 — Fases 3, 4 e 5 (parcial) concluídas
 
 ---
 
@@ -47,9 +47,9 @@
 | # | Task | Status | Notas |
 |---|------|--------|-------|
 | 2.1 | Layout mobile (bottom nav bar) | ✅ | `src/app/(dashboard)/layout.tsx` com navegação inferior e header autenticado |
-| 2.2 | Dashboard mensal | 🔄 | Home autenticada com resumo do mês, categorias e últimos lançamentos |
+| 2.2 | Dashboard mensal | ✅ | Home autenticada com resumo do mês, categorias e últimos lançamentos |
 | 2.3 | CRUD de despesas | ✅ | Página /despesas funcional com criação, edição, exclusão e revalidação do dashboard |
-| 2.4 | CRUD de categorias | ⏳ | Nome + ícone lucide-react, customizáveis |
+| 2.4 | CRUD de categorias | ✅ | Nome + ícone lucide-react (usando IconPicker), customizáveis |
 | 2.5 | CRUD de visitas (guests) | ✅ | Página /visitas funcional com criação, edição, exclusão e validação de período |
 | 2.6 | Navegação de histórico mensal | ✅ | Selector `?mes=YYYY-MM` aplicado em dashboard, despesas e visitas, com leitura e mutação por mês no KV |
 | 2.7 | Server actions para cada entidade | ✅ | expenses, categories e guests concluídos com validação + auth |
@@ -61,9 +61,9 @@
 
 | # | Task | Status | Notas |
 |---|------|--------|-------|
-| 3.1 | Divisão proporcional com visita | ⏳ | Fórmula: % visitante = dias_visita / dias_mês |
-| 3.2 | Despesas recorrentes (templates) | ⏳ | CRUD de templates, sugestão mensal |
-| 3.3 | Saldo acumulado entre meses | ⏳ | Carregar saldo do mês anterior no dashboard |
+| 3.1 | Divisão proporcional com visita | ✅ | Fórmula: overlap_dias_visita aplicado à despesa (pontual/mensal) |
+| 3.2 | Despesas recorrentes (templates) | ✅ | CRUD de templates e visualização/aplicação em `/recorrentes` |
+| 3.3 | Saldo acumulado entre meses | ✅ | Carregando saldoFinal do mês anterior e calculando projeção |
 
 ---
 
@@ -71,9 +71,9 @@
 
 | # | Task | Status | Notas |
 |---|------|--------|-------|
-| 4.1 | Relatório mensal detalhado | ⏳ | Por categoria, por pessoa, gráficos CSS |
-| 4.2 | Export WhatsApp | ⏳ | Texto formatado → link wa.me |
-| 4.3 | Export Excel | ⏳ | xlsx/SheetJS, aba despesas + aba resumo |
+| 4.1 | Relatório mensal detalhado | ✅ | Resumo e top categorias na `/relatorio` |
+| 4.2 | Export WhatsApp | ✅ | Texto formatado via `wa.me` com split correto |
+| 4.3 | Export Excel | ✅ | Gerando aba despesas + aba resumo via `xlsx` |
 
 ---
 
@@ -81,9 +81,9 @@
 
 | # | Task | Status | Notas |
 |---|------|--------|-------|
-| 5.1 | Dark mode (toggle + persistência) | ⏳ | Tailwind class strategy, localStorage |
-| 5.2 | PWA básico | ⏳ | manifest.json, service worker, ícones |
-| 5.3 | Testes de responsividade (375px+) | ⏳ | Todas as telas no iPhone SE |
+| 5.1 | Dark mode (toggle + persistência) | ✅ | Toggle no header com `next-themes` e persistência |
+| 5.2 | PWA básico | ✅ | manifest.json e web app configuration basic (ícones) |
+| 5.3 | Testes de responsividade (375px+) | ⏳ | Ajustar/validar todas as telas em devices pequenos |
 | 5.4 | Deploy na Vercel | ⏳ | Vercel KV addon, env vars, domínio |
 
 ---
@@ -136,7 +136,7 @@ divide-ai/
 
 ## Próximo Passo
 
-**Fase 2.4** → Implementar CRUD de categorias para destravar personalização real da base de despesas.
+**Fases 5.3 e 5.4** → Realizar a checagem final de responsividade no layout mobile e configurar o deploy para a Vercel com os add-ons do Redis KV ativados.
 
 ## Observações Técnicas
 
