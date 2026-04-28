@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { useState } from "react";
 import { Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import {
   createExpenseAction,
@@ -86,25 +86,31 @@ export function ExpensesManager({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
     setFeedback("");
 
-    startTransition(async () => {
-      const result = editingId
-        ? await updateExpenseAction(editingId, form)
-        : await createExpenseAction(form);
+    void (async () => {
+      try {
+        const result = editingId
+          ? await updateExpenseAction(editingId, form)
+          : await createExpenseAction(form);
 
-      if (!result.success) {
-        setFeedback(result.error ?? "Não foi possível salvar a despesa.");
+        if (!result.success) {
+          setFeedback(result.error ?? "Não foi possível salvar a despesa.");
+          setSubmitting(false);
+          return;
+        }
+
+        setFeedback(editingId ? "Despesa atualizada." : "Despesa criada.");
+        resetForm();
         setSubmitting(false);
-        return;
+        router.refresh();
+      } catch {
+        setFeedback("Erro inesperado. Verifique sua conexão e tente novamente.");
+        setSubmitting(false);
       }
-
-      resetForm();
-      setFeedback(editingId ? "Despesa atualizada." : "Despesa criada.");
-      setSubmitting(false);
-      router.refresh();
-    });
+    })();
   }
 
   function handleEdit(expense: Expense) {
@@ -127,22 +133,27 @@ export function ExpensesManager({
     setSubmitting(true);
     setFeedback("");
 
-    startTransition(async () => {
-      const result = await deleteExpenseAction(expenseId);
-      if (!result.success) {
-        setFeedback(result.error ?? "Não foi possível excluir a despesa.");
+    void (async () => {
+      try {
+        const result = await deleteExpenseAction(expenseId);
+        if (!result.success) {
+          setFeedback(result.error ?? "Não foi possível excluir a despesa.");
+          setSubmitting(false);
+          return;
+        }
+
+        if (editingId === expenseId) {
+          resetForm();
+        }
+
+        setFeedback("Despesa excluída.");
         setSubmitting(false);
-        return;
+        router.refresh();
+      } catch {
+        setFeedback("Erro inesperado ao excluir. Tente novamente.");
+        setSubmitting(false);
       }
-
-      if (editingId === expenseId) {
-        resetForm();
-      }
-
-      setFeedback("Despesa excluída.");
-      setSubmitting(false);
-      router.refresh();
-    });
+    })();
   }
 
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.valor, 0);
@@ -186,7 +197,7 @@ export function ExpensesManager({
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Valor</Label>
+                  <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Valor</Label>
                   <Input
                     id="amount"
                     placeholder="Ex.: 249,90"
@@ -198,7 +209,7 @@ export function ExpensesManager({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
+                  <Label htmlFor="descricao" className="text-sm font-semibold text-foreground">Descrição</Label>
                   <Input
                     id="descricao"
                     placeholder="Ex.: mercado da semana"
@@ -213,7 +224,7 @@ export function ExpensesManager({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="categoriaId">Categoria</Label>
+                  <Label htmlFor="categoriaId" className="text-sm font-semibold text-foreground">Categoria</Label>
                   <select
                     id="categoriaId"
                     value={form.categoriaId}
@@ -231,7 +242,7 @@ export function ExpensesManager({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pagadorId">Quem pagou</Label>
+                  <Label htmlFor="pagadorId" className="text-sm font-semibold text-foreground">Quem pagou</Label>
                   <select
                     id="pagadorId"
                     value={form.pagadorId}
@@ -252,7 +263,7 @@ export function ExpensesManager({
               <div className="space-y-3 rounded-3xl border border-border/60 bg-background/70 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <Label htmlFor="splitMorador1">Split entre moradores</Label>
+                    <Label htmlFor="splitMorador1" className="text-sm font-semibold text-foreground">Split entre moradores</Label>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Ajuste quanto do valor fica com o Morador 1 e o restante fecha automaticamente no Morador 2.
                     </p>
@@ -272,18 +283,18 @@ export function ExpensesManager({
                   className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500"
                 />
 
-                <div className="grid grid-cols-2 gap-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2">
-                    Morador 1: {form.splitMorador1}%
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
+                    Morador 1: <span className="font-semibold">{form.splitMorador1}%</span>
                   </div>
-                  <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-right">
-                    Morador 2: {form.splitMorador2}%
+                  <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-right text-sm font-medium text-foreground">
+                    Morador 2: <span className="font-semibold">{form.splitMorador2}%</span>
                   </div>
                 </div>
               </div>
 
               {feedback ? (
-                <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm font-medium text-foreground">
                   {feedback}
                 </div>
               ) : null}
