@@ -19,6 +19,26 @@ export const expenseSchema = z.object({
   visitaId: z.string().optional(),
 });
 
+export const expenseActionSchema = z.object({
+  amount: z.string().min(1, "Valor é obrigatório").regex(/^[\d\.,\s]+$/, "Valor inválido"),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (esperado: YYYY-MM-DD)"),
+  visitaPolitica: z.enum(["none", "during", "month"]).default("during"),
+  descricao: z.string().min(1, "Descrição obrigatória").max(200, "Descrição muito longa"),
+  categoriaId: z.string().min(1, "Selecione uma categoria"),
+  pagadorId: z.string().min(1, "Selecione quem pagou"),
+  splitMorador1: z.number().min(0).max(100),
+  splitMorador2: z.number().min(0).max(100),
+}).refine((data) => {
+  const amountValue = Number(data.amount.replace(/[\.\s]/g, "").replace(",", "."));
+  return amountValue > 0;
+}, {
+  message: "O valor deve ser maior que zero.",
+  path: ["amount"],
+}).refine((data) => data.splitMorador1 + data.splitMorador2 === 100, {
+  message: "O split precisa somar 100%.",
+  path: ["splitMorador1"],
+});
+
 export const categorySchema = z.object({
   nome: z.string().min(1, "Nome obrigatório").max(50),
   icone: z.string().min(1, "Ícone obrigatório"),

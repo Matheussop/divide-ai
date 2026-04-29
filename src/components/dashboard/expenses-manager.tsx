@@ -16,6 +16,7 @@ import { MonthSelector } from "@/components/dashboard/month-selector";
 import { computeVisitorCostForExpense } from "@/lib/finance/visits";
 import { cn } from "@/lib/utils";
 import type { Category, Expense, Guest, User } from "@/types";
+import { expenseActionSchema } from "@/lib/schemas";
 import { useRouter } from "next/navigation";
 
 interface ExpensesManagerProps {
@@ -105,6 +106,21 @@ export function ExpensesManager({
     }));
   }
 
+  function handleAmountChange(value: string) {
+    const onlyDigits = value.replace(/\D/g, "");
+    if (!onlyDigits) {
+      setForm((current) => ({ ...current, amount: "" }));
+      return;
+    }
+    const cents = parseInt(onlyDigits, 10);
+    const formatted = new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+    
+    setForm((current) => ({ ...current, amount: formatted }));
+  }
+
   function handleCategoryOrPayerChange(newCategoryId: string, newPayerId: string) {
     const category = categories.find((c) => c.id === newCategoryId);
     const isAcerto = category?.nome.toLowerCase().includes("acerto");
@@ -131,6 +147,13 @@ export function ExpensesManager({
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+
+    const parsed = expenseActionSchema.safeParse(form);
+    if (!parsed.success) {
+      setFeedback(parsed.error.issues[0]?.message ?? "Verifique os campos obrigatórios.");
+      return;
+    }
+
     setSubmitting(true);
     setFeedback("");
 
@@ -161,7 +184,10 @@ export function ExpensesManager({
     setEditingId(expense.id);
     setFeedback("");
     setForm({
-      amount: (expense.valor / 100).toFixed(2).replace(".", ","),
+      amount: new Intl.NumberFormat("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(expense.valor / 100),
       data: expense.data ?? expense.criadoEm.slice(0, 10),
       visitaPolitica: expense.visitaPolitica ?? "during",
       descricao: expense.descricao,
@@ -291,11 +317,10 @@ export function ExpensesManager({
                   <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Valor</Label>
                   <Input
                     id="amount"
-                    placeholder="Ex.: 249,90"
+                    inputMode="numeric"
+                    placeholder="Ex.: 0,00"
                     value={form.amount}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, amount: event.target.value }))
-                    }
+                    onChange={(event) => handleAmountChange(event.target.value)}
                     required
                   />
                 </div>

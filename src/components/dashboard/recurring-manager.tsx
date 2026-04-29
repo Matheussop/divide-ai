@@ -73,6 +73,21 @@ export function RecurringManager({ templates, categories, users }: RecurringMana
     setEditingId(null);
   }
 
+  function handleAmountChange(value: string) {
+    const onlyDigits = value.replace(/\D/g, "");
+    if (!onlyDigits) {
+      setForm((c) => ({ ...c, amount: "" }));
+      return;
+    }
+    const cents = parseInt(onlyDigits, 10);
+    const formatted = new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+
+    setForm((c) => ({ ...c, amount: formatted }));
+  }
+
   function handleSplitChange(value: number) {
     setForm((current) => ({
       ...current,
@@ -114,7 +129,10 @@ export function RecurringManager({ templates, categories, users }: RecurringMana
     setEditingId(template.id);
     setFeedback("");
     setForm({
-      amount: (template.valor / 100).toFixed(2).replace(".", ","),
+      amount: new Intl.NumberFormat("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(template.valor / 100),
       descricao: template.descricao,
       categoriaId: template.categoriaId,
       splitMorador1: template.split["user-1"] ?? 50,
@@ -234,9 +252,10 @@ export function RecurringManager({ templates, categories, users }: RecurringMana
                   </Label>
                   <Input
                     id="rec-amount"
-                    placeholder="Ex.: 249,90"
+                    inputMode="numeric"
+                    placeholder="0,00"
                     value={form.amount}
-                    onChange={(event) => setForm((c) => ({ ...c, amount: event.target.value }))}
+                    onChange={(event) => handleAmountChange(event.target.value)}
                     required
                   />
                 </div>
