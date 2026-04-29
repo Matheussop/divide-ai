@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { auth } from "@/lib/auth";
-import { getUserById, setUser, deleteUser as deleteUserKv, getAllUsers } from "@/lib/kv/users";
+import { getUserById, setUser, deleteUser as deleteUserKv, setUserEmailIndex } from "@/lib/kv/users";
+import { getJSON, setJSON } from "@/lib/redis";
 import type { ActionResult, User } from "@/types";
 
 function revalidateUserViews() {
-  revalidatePath("/usuarios");
-  revalidatePath("/");
+  revalidatePath("/usuarios", "page");
+  revalidatePath("/", "layout");
 }
 
 interface UpdateUserInput {
@@ -32,6 +33,8 @@ export async function updateUserAction(
     return { success: false, error: "Usuário não encontrado." };
   }
 
+  const oldEmail = existingUser.email;
+
   // Update fields
   existingUser.nome = input.nome;
   existingUser.email = input.email;
@@ -42,6 +45,15 @@ export async function updateUserAction(
   }
 
   await setUser(existingUser);
+
+  // Update email index if email changed
+  if (oldEmail !== input.email) {
+    const emailIndex = (await getJSON<Record<string, string>>("user-emails")) ?? {};
+    delete emailIndex[oldEmail];
+    emailIndex[input.email] = existingUser.id;
+    await setJSON("user-emails", emailIndex);
+  }
+
   revalidateUserViews();
 
   return { success: true };
@@ -62,6 +74,12 @@ export async function createUserAction(
     return { success: false, error: "Acesso negado." };
   }
 
+  // Check if email already exists
+  const emailIndex = (await getJSON<Record<string, string>>("user-emails")) ?? {};
+  if (emailIndex[input.email]) {
+    return { success: false, error: "Este email já está em uso." };
+  }
+
   const passwordHash = await hash(input.password || "123456", 12);
 
   const newUser: User = {
@@ -73,6 +91,10 @@ export async function createUserAction(
   };
 
   await setUser(newUser);
+  
+  emailIndex[input.email] = newUser.id;
+  await setJSON("user-emails", emailIndex);
+
   revalidateUserViews();
 
   return { success: true };
@@ -86,6 +108,13 @@ export async function deleteUserAction(id: string): Promise<ActionResult> {
 
   if (session.user.id === id) {
     return { success: false, error: "Você não pode excluir a si mesmo." };
+  }
+
+  const existingUser = await getUserById(id);
+  if (existingUser) {
+    const emailIndex = (await getJSON<Record<string, string>>("user-emails")) ?? {};
+    delete emailIndex[existingUser.email];
+    await setJSON("user-emails", emailIndex);
   }
 
   await deleteUserKv(id);
