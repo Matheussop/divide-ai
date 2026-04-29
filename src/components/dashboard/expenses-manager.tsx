@@ -105,6 +105,29 @@ export function ExpensesManager({
     }));
   }
 
+  function handleCategoryOrPayerChange(newCategoryId: string, newPayerId: string) {
+    const category = categories.find((c) => c.id === newCategoryId);
+    const isAcerto = category?.nome.toLowerCase().includes("acerto");
+
+    if (isAcerto) {
+      // Se for acerto, o morador que pagou fica com 100% e o outro com 0%
+      const pagadorIsUser1 = newPayerId === "user-1";
+      setForm((current) => ({
+        ...current,
+        categoriaId: newCategoryId,
+        pagadorId: newPayerId,
+        splitMorador1: pagadorIsUser1 ? 0 : 100,
+        splitMorador2: pagadorIsUser1 ? 100 : 0,
+      }));
+    } else {
+      setForm((current) => ({
+        ...current,
+        categoriaId: newCategoryId,
+        pagadorId: newPayerId,
+      }));
+    }
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
@@ -335,7 +358,7 @@ export function ExpensesManager({
                     id="categoriaId"
                     value={form.categoriaId}
                     onChange={(event) =>
-                      setForm((current) => ({ ...current, categoriaId: event.target.value }))
+                      handleCategoryOrPayerChange(event.target.value, form.pagadorId)
                     }
                     className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                   >
@@ -353,7 +376,7 @@ export function ExpensesManager({
                     id="pagadorId"
                     value={form.pagadorId}
                     onChange={(event) =>
-                      setForm((current) => ({ ...current, pagadorId: event.target.value }))
+                      handleCategoryOrPayerChange(form.categoriaId, event.target.value)
                     }
                     className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                   >
@@ -371,7 +394,7 @@ export function ExpensesManager({
                   <div>
                     <Label htmlFor="splitMorador1" className="text-sm font-semibold text-foreground">Split entre moradores</Label>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Ajuste quanto do valor fica com o Morador 1 e o restante fecha automaticamente no Morador 2.
+                      Ajuste quanto do valor fica com o {userMap.get(form.pagadorId)} e o restante fecha automaticamente no {userMap.get(form.pagadorId === "user-1" ? "user-2" : "user-1")}.
                     </p>
                   </div>
                   <div className="text-right text-sm font-semibold text-foreground">
@@ -391,10 +414,10 @@ export function ExpensesManager({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
-                    Morador 1: <span className="font-semibold">{form.splitMorador1}%</span>
+                    {userMap.get(form.pagadorId)}: <span className="font-semibold">{form.splitMorador1}%</span>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-right text-sm font-medium text-foreground">
-                    Morador 2: <span className="font-semibold">{form.splitMorador2}%</span>
+                    {userMap.get(form.pagadorId === "user-1" ? "user-2" : "user-1")}: <span className="font-semibold">{form.splitMorador2}%</span>
                   </div>
                 </div>
               </div>
