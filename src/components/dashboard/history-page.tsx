@@ -1,12 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { deleteLogAction, clearLogsAction } from "@/app/actions/logs";
 import { CalendarRange, Activity, PlusCircle, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { ActivityLog } from "@/types";
 
 interface HistoryPageProps {
   logs: ActivityLog[];
+  userRole?: "admin" | "user";
 }
 
 function getIconForAction(actionType: string) {
@@ -57,7 +62,48 @@ function formatRelativeTime(dateString: string) {
   }).format(date);
 }
 
-export function HistoryPage({ logs }: HistoryPageProps) {
+export function HistoryPage({ logs, userRole }: HistoryPageProps) {
+  const router = useRouter();
+  const isAdmin = userRole === "admin";
+  const [feedback, setFeedback] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleDeleteLog(id: string) {
+    if (!isAdmin || submitting) return;
+    const confirmed = window.confirm("Remover este item do histórico?");
+    if (!confirmed) return;
+
+    setSubmitting(true);
+    setFeedback("");
+    const result = await deleteLogAction(id);
+    setSubmitting(false);
+
+    if (!result.success) {
+      setFeedback(result.error ?? "Não foi possível remover o registro.");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  async function handleClearLogs() {
+    if (!isAdmin || submitting || logs.length === 0) return;
+    const confirmed = window.confirm("Limpar todo o histórico? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
+
+    setSubmitting(true);
+    setFeedback("");
+    const result = await clearLogsAction();
+    setSubmitting(false);
+
+    if (!result.success) {
+      setFeedback(result.error ?? "Não foi possível limpar o histórico.");
+      return;
+    }
+
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-4xl border border-border/60 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.15),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,255,255,0.8))] p-6 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.55)] dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.15),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.88))]">
@@ -75,9 +121,29 @@ export function HistoryPage({ logs }: HistoryPageProps) {
 
       <Card className="rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
         <CardHeader>
-          <CardTitle className="text-lg tracking-[-0.03em]">Últimas atividades</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-lg tracking-[-0.03em]">Últimas atividades</CardTitle>
+            {isAdmin ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleClearLogs}
+                disabled={submitting || logs.length === 0}
+              >
+                <Trash2 className="mr-1 size-4" />
+                Limpar histórico
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent>
+          {feedback ? (
+            <div className="mb-4 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm font-medium text-foreground">
+              {feedback}
+            </div>
+          ) : null}
+
           <div className="space-y-4 relative">
             {/* Timeline line */}
             <div className="absolute left-6 top-2 bottom-2 w-px bg-border/60 hidden sm:block" />
@@ -117,6 +183,20 @@ export function HistoryPage({ logs }: HistoryPageProps) {
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                       {log.description}
                     </p>
+                    {isAdmin ? (
+                      <div className="mt-3 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteLog(log.id)}
+                          disabled={submitting}
+                        >
+                          <Trash2 className="mr-1 size-4" />
+                          Remover
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,21 +21,23 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
+
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
+      callbackUrl,
     });
 
     setLoading(false);
 
-    if (result?.error) {
+    if (result?.error || !result?.ok) {
       setError("Email ou senha incorretos");
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    window.location.assign(result.url ?? callbackUrl);
   }
 
   return (

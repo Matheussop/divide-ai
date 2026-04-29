@@ -27,3 +27,16 @@ export async function addLog(log: Omit<ActivityLog, "id" | "createdAt">): Promis
 
   await setJSON(LOGS_KEY, logs);
 }
+
+export async function deleteLog(id: string): Promise<boolean> {
+  const logs = await getLogs();
+  const filtered = logs.filter((log) => log.id !== id);
+  if (filtered.length === logs.length) return false;
+
+  await setJSON(LOGS_KEY, filtered);
+  return true;
+}
+
+export async function clearLogs(): Promise<void> {
+  await setJSON(LOGS_KEY, [] as ActivityLog[]);
+}
