@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet } from "lucide-react";
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +19,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl") || "/";
 
     const result = await signIn("credentials", {
       email,
