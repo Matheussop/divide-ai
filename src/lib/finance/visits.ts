@@ -108,7 +108,6 @@ export function computeVisitorCostsForExpense(
   let activeGuests: Guest[];
 
   if (policy === "month") {
-    // Always use all guests with overlap in the month — visitaId is legacy and ignored here
     activeGuests = resolveAllGuestsForMonth(guests, monthKey);
   } else {
     // "during" policy: all guests active on the expense date
@@ -206,4 +205,3 @@ export function computeOwedByUserForExpense(
 
   return owed;
 }
-

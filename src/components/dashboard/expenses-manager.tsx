@@ -260,7 +260,7 @@ export function ExpensesManager({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg tracking-[-0.03em]">
@@ -472,13 +472,13 @@ export function ExpensesManager({
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)] xl:sticky xl:top-6">
+        <Card className="rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
           <CardHeader>
             <CardTitle className="text-lg tracking-[-0.03em]">
               Lançamentos do mês atual
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-12rem)]">
+          <CardContent className="space-y-3">
             {expenses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm leading-6 text-muted-foreground">
                 Nenhuma despesa cadastrada para este mes. Use o formulario ao lado para alimentar o dashboard.
