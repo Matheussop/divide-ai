@@ -1,4 +1,4 @@
-import { getJSON, setJSON } from "@/lib/redis";
+import { getJSON, setJSON, getKeys } from "@/lib/redis";
 import type { MonthlyBalance } from "@/types";
 
 const key = (month: string) => `balances:${month}`;
@@ -15,14 +15,11 @@ export async function setBalance(
 }
 
 export async function getMonthsWithData(): Promise<string[]> {
-  return (await getJSON<string[]>("months-with-data")) ?? [];
+  const keys = await getKeys("expenses:*");
+  const months = keys.map((k) => k.replace("expenses:", ""));
+  return months.sort().reverse(); // Sort descending
 }
 
 export async function addMonthWithData(month: string): Promise<void> {
-  const months = await getMonthsWithData();
-  if (!months.includes(month)) {
-    months.push(month);
-    months.sort();
-    await setJSON("months-with-data", months);
-  }
+  // Obsoleto: `getMonthsWithData` agora busca dinamicamente as chaves `expenses:*`
 }

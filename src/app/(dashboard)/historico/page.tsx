@@ -1,16 +1,29 @@
-import { PlaceholderPage } from "@/components/dashboard/placeholder-page";
+import { HistoryPage } from "@/components/dashboard/history-page";
+import { getMonthsWithData, getBalance } from "@/lib/kv/balances";
+import { getExpenses } from "@/lib/kv/expenses";
+import { getResidents } from "@/lib/kv/users";
+import { formatMonthLabel } from "@/lib/month";
 
-export default function HistoryPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Fase 2.6"
-      title="Histórico mensal vai costurar a memória financeira do apê."
-      description="O dashboard já reconhece o mês atual e a contagem de meses com dados. Esta seção será a ponte para navegar entre períodos."
-      bullets={[
-        "Seletor de mês com leitura de dados diretamente do Redis.",
-        "Reaproveitamento da visualização mensal para meses anteriores.",
-        "Base para saldo acumulado e relatórios completos nas próximas fases.",
-      ]}
-    />
+export default async function HistoricoRoute() {
+  const months = await getMonthsWithData();
+  const users = await getResidents();
+  
+  // Fetch summary data for all months
+  const monthsData = await Promise.all(
+    months.map(async (month) => {
+      const expenses = await getExpenses(month);
+      const totalSpent = expenses.reduce((sum, exp) => sum + exp.valor, 0);
+      const balance = await getBalance(month);
+      
+      return {
+        monthKey: month,
+        label: formatMonthLabel(month),
+        totalSpent,
+        expensesCount: expenses.length,
+        balance,
+      };
+    })
   );
+
+  return <HistoryPage data={monthsData} users={users} />;
 }

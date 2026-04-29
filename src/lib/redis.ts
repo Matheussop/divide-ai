@@ -31,3 +31,7 @@ export async function getJSON<T>(key: string): Promise<T | null> {
 export async function setJSON<T>(key: string, value: T): Promise<void> {
   await redis.set(key, JSON.stringify(value));
 }
+
+export async function getKeys(pattern: string): Promise<string[]> {
+  return redis.keys(pattern);
+}
