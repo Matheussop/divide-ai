@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { buildWhatsAppExportText, buildWhatsAppUrl } from "@/lib/reports/whatsapp";
 import { buildMonthlyExcelWorkbook, workbookToBase64 } from "@/lib/reports/excel";
-import { computeOwedByUserForExpense, computeVisitorCostForExpense } from "@/lib/finance/visits";
+import { computeOwedByUserForExpense, computeVisitorCostsForExpense } from "@/lib/finance/visits";
 import type { Category, Expense, User, Guest } from "@/types";
 
 interface MonthlyReportPageProps {
@@ -63,14 +63,17 @@ export function MonthlyReportPage({ monthKey, monthLabel, expenses, categories, 
     for (const expense of expenses) {
       paid[expense.pagadorId] = (paid[expense.pagadorId] ?? 0) + expense.valor;
 
-      const visitor = computeVisitorCostForExpense(expense, monthKey, guests);
-      if (visitor) {
+      const visitors = computeVisitorCostsForExpense(expense, monthKey, guests);
+      for (const visitor of visitors) {
         visitorCost[visitor.hostId] = (visitorCost[visitor.hostId] ?? 0) + visitor.visitorCost;
       }
 
       const owed = computeOwedByUserForExpense(expense, monthKey, guests);
       for (const [userId, amount] of Object.entries(owed)) {
-        const extraForVisit = visitor && visitor.hostId === userId ? visitor.visitorCost : 0;
+        // Strip the repasse portion from the user's base consumption display
+        const extraForVisit = visitors
+          .filter((v) => v.hostId === userId)
+          .reduce((sum, v) => sum + v.visitorCost, 0);
         baseOwed[userId] = (baseOwed[userId] ?? 0) + (amount - extraForVisit);
       }
     }

@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MonthSelector } from "@/components/dashboard/month-selector";
-import { computeVisitorCostForExpense } from "@/lib/finance/visits";
+import { computeVisitorCostsForExpense } from "@/lib/finance/visits";
 import { cn } from "@/lib/utils";
 import type { Category, Expense, Guest, User } from "@/types";
 import { expenseActionSchema } from "@/lib/schemas";
@@ -260,7 +260,7 @@ export function ExpensesManager({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
         <Card className="rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg tracking-[-0.03em]">
@@ -269,7 +269,7 @@ export function ExpensesManager({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-5 rounded-3xl border border-border/60 bg-background/70 p-4">
+            {/* <div className="mb-5 rounded-3xl border border-border/60 bg-background/70 p-4">
               <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
                 Como preencher
               </p>
@@ -310,7 +310,7 @@ export function ExpensesManager({
                   <span className="font-semibold text-foreground">Split</span>: divisão base entre moradores (a visita ajusta por cima conforme a opção escolhida).
                 </p>
               </div>
-            </div>
+            </div> */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -472,13 +472,13 @@ export function ExpensesManager({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
+        <Card className="flex flex-col rounded-[1.75rem] border border-border/60 bg-card/90 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)] xl:sticky xl:top-6">
           <CardHeader>
             <CardTitle className="text-lg tracking-[-0.03em]">
               Lançamentos do mês atual
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-12rem)]">
             {expenses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm leading-6 text-muted-foreground">
                 Nenhuma despesa cadastrada para este mes. Use o formulario ao lado para alimentar o dashboard.
@@ -495,19 +495,25 @@ export function ExpensesManager({
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         {(() => {
-                          const visitor = computeVisitorCostForExpense(expense, monthKey, guests);
-                          if (!visitor) return null;
+                          const visitors = computeVisitorCostsForExpense(expense, monthKey, guests);
+                          if (visitors.length === 0) return null;
 
-                          const guest = guestMap.get(visitor.guestId);
-                          const guestName = guest?.nome ?? "Visita";
-                          const hostName = userMap.get(visitor.hostId) ?? visitor.hostId;
                           const policy = expense.visitaPolitica ?? "during";
 
                           return (
-                            <p className="mb-2 text-xs font-medium text-sky-700 dark:text-sky-200">
-                              Visita ({guestName}) repassou {formatCurrency(visitor.visitorCost)} para {hostName}
-                              {policy === "month" ? " (mês inteiro)" : " (durante a visita)"}
-                            </p>
+                            <div className="mb-2 space-y-0.5">
+                              {visitors.map((visitor) => {
+                                const guest = guestMap.get(visitor.guestId);
+                                const guestName = guest?.nome ?? "Visita";
+                                const hostName = userMap.get(visitor.hostId) ?? visitor.hostId;
+                                return (
+                                  <p key={visitor.guestId} className="text-xs font-medium text-sky-700 dark:text-sky-200">
+                                    Visita ({guestName}) repassou {formatCurrency(visitor.visitorCost)} para {hostName}
+                                    {policy === "month" ? " (mês inteiro)" : " (durante a visita)"}
+                                  </p>
+                                );
+                              })}
+                            </div>
                           );
                         })()}
                         <div className="flex flex-wrap items-center gap-2">

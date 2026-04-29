@@ -2,10 +2,15 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
   const current = theme === "system" ? resolvedTheme : theme;
 
   return (
@@ -17,7 +22,7 @@ export function ThemeToggle() {
       aria-label="Alternar tema"
       title="Alternar tema"
     >
-      {current === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      {mounted && current === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
   );
 }

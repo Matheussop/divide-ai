@@ -4,6 +4,7 @@ import { getExpenses } from "@/lib/kv/expenses";
 import { getGuests } from "@/lib/kv/guests";
 import { getResidents } from "@/lib/kv/users";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
+import { prevMonthKey } from "@/lib/finance/balances";
 
 type ExpensesPageProps = {
   searchParams?: {
@@ -13,12 +14,16 @@ type ExpensesPageProps = {
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
   const monthKey = resolveMonthKey(searchParams?.mes);
-  const [categories, users, expenses, guests] = await Promise.all([
+  const previousMonth = prevMonthKey(monthKey);
+  const [categories, users, expenses, guestsThisMonth, guestsPrevMonth] = await Promise.all([
     getCategories(),
     getResidents(),
     getExpenses(monthKey),
     getGuests(monthKey),
+    getGuests(previousMonth),
   ]);
+
+  const guests = [...guestsThisMonth, ...guestsPrevMonth];
 
   return (
     <ExpensesManager
