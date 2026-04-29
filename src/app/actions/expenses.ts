@@ -6,7 +6,10 @@ import { addExpense, deleteExpense, getExpenses, setExpenses } from "@/lib/kv/ex
 import { resolveMonthKey } from "@/lib/month";
 import { getGuests } from "@/lib/kv/guests";
 import { expenseSchema } from "@/lib/schemas";
-import type { ActionResult, Expense, Guest } from "@/types";
+import { addLog } from "@/lib/kv/logs";
+import { resolveActiveGuest, resolveBestGuestForMonth } from "@/lib/finance/visits";
+import { prevMonthKey } from "@/lib/finance/balances";
+import type { ActionResult, Expense } from "@/types";
 
 function revalidateExpenseViews() {
   revalidatePath("/");
@@ -22,59 +25,6 @@ interface ExpenseActionInput {
   pagadorId: string;
   splitMorador1: number;
   splitMorador2: number;
-}
-
-function prevMonthKey(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  const date = new Date(year, month - 1, 1);
-  date.setMonth(date.getMonth() - 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function getDaysInMonth(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Date(year, month, 0).getDate();
-}
-
-function overlapDaysInclusive(
-  start: Date,
-  end: Date,
-  rangeStart: Date,
-  rangeEnd: Date
-): number {
-  const clampedStart = start > rangeStart ? start : rangeStart;
-  const clampedEnd = end < rangeEnd ? end : rangeEnd;
-  if (clampedEnd < clampedStart) return 0;
-  const diffMs = clampedEnd.getTime() - clampedStart.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-}
-
-function resolveActiveGuest(guests: Guest[], expenseDate: string) {
-  const candidates = guests.filter(
-    (guest) => expenseDate >= guest.dataInicio && expenseDate <= guest.dataFim
-  );
-  if (candidates.length === 0) return null;
-  return candidates.sort((a, b) => b.dataInicio.localeCompare(a.dataInicio))[0] ?? null;
-}
-
-function resolveBestGuestForMonth(guests: Guest[], monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = new Date(year, month - 1, getDaysInMonth(monthKey));
-
-  const overlaps = guests
-    .map((guest) => {
-      const start = new Date(`${guest.dataInicio}T00:00:00`);
-      const end = new Date(`${guest.dataFim}T00:00:00`);
-      return {
-        guest,
-        days: overlapDaysInclusive(start, end, monthStart, monthEnd),
-      };
-    })
-    .filter((item) => item.days > 0)
-    .sort((a, b) => b.days - a.days || b.guest.dataInicio.localeCompare(a.guest.dataInicio));
-
-  return overlaps[0]?.guest ?? null;
 }
 
 async function resolveVisitId(
@@ -155,6 +105,15 @@ export async function createExpenseAction(
   };
 
   await addExpense(monthKey, expense);
+  
+  await addLog({
+    userId: session.user.id,
+    userName: session.user.name ?? "Usuário",
+    actionType: "CREATE",
+    entityName: "Despesa",
+    description: `Adicionou a despesa "${expense.descricao}" no valor de R$ ${(expense.valor / 100).toFixed(2)}`,
+  });
+
   revalidateExpenseViews();
   return { success: true, data: expense };
 }
@@ -206,6 +165,15 @@ export async function updateExpenseAction(
 
   expenses[index] = updatedExpense;
   await setExpenses(monthKey, expenses);
+
+  await addLog({
+    userId: session.user.id,
+    userName: session.user.name ?? "Usuário",
+    actionType: "UPDATE",
+    entityName: "Despesa",
+    description: `Editou a despesa "${updatedExpense.descricao}" no valor de R$ ${(updatedExpense.valor / 100).toFixed(2)}`,
+  });
+
   revalidateExpenseViews();
   return { success: true, data: updatedExpense };
 }
@@ -219,9 +187,23 @@ export async function deleteExpenseAction(
     return { success: false, error: "Não autorizado" };
   }
 
-  const deleted = await deleteExpense(resolveMonthKey(monthKeyInput), expenseId);
+  const monthKey = resolveMonthKey(monthKeyInput);
+  const expenses = await getExpenses(monthKey);
+  const expense = expenses.find((e) => e.id === expenseId);
+
+  const deleted = await deleteExpense(monthKey, expenseId);
   if (!deleted) {
     return { success: false, error: "Despesa não encontrada." };
+  }
+
+  if (expense) {
+    await addLog({
+      userId: session.user.id,
+      userName: session.user.name ?? "Usuário",
+      actionType: "DELETE",
+      entityName: "Despesa",
+      description: `Excluiu a despesa "${expense.descricao}"`,
+    });
   }
 
   revalidateExpenseViews();

@@ -64,6 +64,16 @@ export interface MonthlyBalance {
   calculadoEm: string;
 }
 
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  actionType: "CREATE" | "UPDATE" | "DELETE";
+  entityName: string;
+  description: string;
+  createdAt: string;
+}
+
 export type ActionResult<T = undefined> = {
   success: boolean;
   data?: T;

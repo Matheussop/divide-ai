@@ -9,6 +9,8 @@ import {
 } from "@/lib/kv/guests";
 import { resolveMonthKey } from "@/lib/month";
 import { guestSchema } from "@/lib/schemas";
+import { addLog } from "@/lib/kv/logs";
+import { getGuests } from "@/lib/kv/guests";
 import type { ActionResult, Guest } from "@/types";
 
 interface GuestActionInput {
@@ -74,6 +76,15 @@ export async function createGuestAction(
   };
 
   await addGuest(resolveMonthKey(monthKeyInput), guest);
+
+  await addLog({
+    userId: session.user.id,
+    userName: session.user.name ?? "Usuário",
+    actionType: "CREATE",
+    entityName: "Visita",
+    description: `Adicionou a visita "${guest.nome}"`,
+  });
+
   revalidateGuestViews();
   return { success: true, data: guest };
 }
@@ -110,6 +121,14 @@ export async function updateGuestAction(
     return { success: false, error: "Visita nao encontrada." };
   }
 
+  await addLog({
+    userId: session.user.id,
+    userName: session.user.name ?? "Usuário",
+    actionType: "UPDATE",
+    entityName: "Visita",
+    description: `Editou a visita "${updated.nome}"`,
+  });
+
   revalidateGuestViews();
   return { success: true, data: updated };
 }
@@ -123,9 +142,23 @@ export async function deleteGuestAction(
     return { success: false, error: "Nao autorizado" };
   }
 
-  const deleted = await deleteGuest(resolveMonthKey(monthKeyInput), guestId);
+  const monthKey = resolveMonthKey(monthKeyInput);
+  const guests = await getGuests(monthKey);
+  const guest = guests.find(g => g.id === guestId);
+
+  const deleted = await deleteGuest(monthKey, guestId);
   if (!deleted) {
     return { success: false, error: "Visita nao encontrada." };
+  }
+
+  if (guest) {
+    await addLog({
+      userId: session.user.id,
+      userName: session.user.name ?? "Usuário",
+      actionType: "DELETE",
+      entityName: "Visita",
+      description: `Excluiu a visita "${guest.nome}"`,
+    });
   }
 
   revalidateGuestViews();
