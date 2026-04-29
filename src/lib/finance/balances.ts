@@ -1,3 +1,4 @@
+import { getKeys, getJSON } from "@/lib/redis";
 import type { Expense, Guest, MonthlyBalance } from "@/types";
 import { computeOwedByUserForExpense } from "@/lib/finance/visits";
 
@@ -6,6 +7,29 @@ export function prevMonthKey(monthKey: string) {
   const date = new Date(year, month - 1, 1);
   date.setMonth(date.getMonth() - 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export async function getAccumulatedNetBalances(untilMonthKey: string): Promise<Record<string, number>> {
+  const keys = await getKeys("expenses:*");
+  const monthKeys = keys.map((k) => k.replace("expenses:", "")).filter((m) => m < untilMonthKey);
+
+  const netByUser: Record<string, number> = {};
+
+  for (const month of monthKeys) {
+    const expenses = (await getJSON<Expense[]>(`expenses:${month}`)) ?? [];
+    const guests = (await getJSON<Guest[]>(`guests:${month}`)) ?? [];
+
+    for (const expense of expenses) {
+      netByUser[expense.pagadorId] = (netByUser[expense.pagadorId] ?? 0) + expense.valor;
+
+      const owedForExpense = computeOwedByUserForExpense(expense, month, guests);
+      for (const [userId, amount] of Object.entries(owedForExpense)) {
+        netByUser[userId] = (netByUser[userId] ?? 0) - amount;
+      }
+    }
+  }
+
+  return netByUser;
 }
 
 export function calculateMonthBalance(

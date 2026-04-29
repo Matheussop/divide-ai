@@ -9,7 +9,7 @@ import { MonthSelector } from "@/components/dashboard/month-selector";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 import { getUserById } from "@/lib/kv/users";
 import { computeOwedByUserForExpense } from "@/lib/finance/visits";
-import { prevMonthKey } from "@/lib/finance/balances";
+import { prevMonthKey, getAccumulatedNetBalances } from "@/lib/finance/balances";
 import type { Expense, Guest } from "@/types";
 
 function formatCurrency(valueInCents: number) {
@@ -62,17 +62,16 @@ type DashboardHomePageProps = {
 export default async function DashboardHomePage({ searchParams }: DashboardHomePageProps) {
   const monthKey = resolveMonthKey(searchParams?.mes);
   const previousMonthKey = prevMonthKey(monthKey);
-  const [expenses, categories, monthsWithData, guestsThisMonth, guestsPrevMonth, previousBalance] =
+  const [expenses, categories, monthsWithData, guestsThisMonth, guestsPrevMonth, pastNets] =
     await Promise.all([
     getExpenses(monthKey),
     getCategories(),
     getMonthsWithData(),
     getGuests(monthKey),
     getGuests(previousMonthKey),
-    getBalance(previousMonthKey),
+    getAccumulatedNetBalances(monthKey),
   ]);
   const guests = [...guestsThisMonth, ...guestsPrevMonth];
-  const saldoAnterior = previousBalance?.saldoFinal ?? 0;
 
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.valor, 0);
   const categoryMap = new Map(categories.map((category) => [category.id, category.nome]));
@@ -86,7 +85,7 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
-  const { paidByUser, owedByUser, sorted } = calculateBalances(expenses, monthKey, guests);
+  const { paidByUser, owedByUser, netByUser, sorted } = calculateBalances(expenses, monthKey, guests);
   const leadingUserId = sorted[0]?.[0];
   const trailingUserId = sorted.at(-1)?.[0];
 
@@ -96,6 +95,16 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
   ]);
 
   const balanceGap = sorted.length >= 2 ? sorted[0][1] : 0;
+  
+  // Calculate who is leading overall (considering past months)
+  const pastSorted = Object.entries(pastNets).sort((a, b) => b[1] - a[1]);
+  const pastLeadingUserId = pastSorted[0]?.[0];
+  const pastBalanceGap = pastSorted.length >= 2 ? pastSorted[0][1] : 0;
+
+  const [pastLeadingUser] = await Promise.all([
+    pastLeadingUserId ? getUserById(pastLeadingUserId) : null,
+  ]);
+
   const recentExpenses = [...expenses]
     .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm))
     .slice(0, 5);
@@ -223,26 +232,37 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[1.5rem] border border-border/60 bg-background/70 p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Saldo anterior
+                      Pendência de meses anteriores
                     </p>
                     <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                      {formatCurrency(Math.abs(saldoAnterior))}
+                      {formatCurrency(Math.abs(pastBalanceGap))}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {saldoAnterior === 0
-                        ? "Sem pendências do mês anterior."
-                        : "Valor carregado do saldo final do mês anterior."}
+                      {pastBalanceGap === 0
+                        ? "Sem pendências passadas."
+                        : `Vindo de meses anteriores a favor de ${pastLeadingUser?.nome ?? pastLeadingUserId}.`}
                     </p>
                   </div>
                   <div className="rounded-[1.5rem] border border-border/60 bg-background/70 p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Saldo acumulado (estimado)
+                      Estimativa final (Até o momento)
                     </p>
                     <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                      {formatCurrency(Math.abs(saldoAnterior + balanceGap))}
+                      {/* Calculate the combined net for the person who is leading NOW in the total history */}
+                      {(() => {
+                        // sum current + past for all users, find the new leader
+                        const combinedNets: Record<string, number> = {};
+                        const allUsers = Array.from(new Set([...Object.keys(netByUser), ...Object.keys(pastNets)]));
+                        for (const u of allUsers) {
+                          combinedNets[u] = (netByUser[u] ?? 0) + (pastNets[u] ?? 0);
+                        }
+                        const combinedSorted = Object.entries(combinedNets).sort((a, b) => b[1] - a[1]);
+                        const totalGap = combinedSorted.length >= 2 ? combinedSorted[0][1] : 0;
+                        return formatCurrency(Math.abs(totalGap));
+                      })()}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Soma do saldo anterior com a diferença atual do mês.
+                      Projeção do acerto final somando a diferença deste mês com o passado.
                     </p>
                   </div>
                 </div>
