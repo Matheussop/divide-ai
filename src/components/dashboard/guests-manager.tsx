@@ -26,15 +26,13 @@ interface GuestsManagerProps {
 interface GuestFormState {
   nome: string;
   hostId: string;
-  dataInicio: string;
-  dataFim: string;
+  periodos: { dataInicio: string; dataFim: string }[];
 }
 
 const emptyState = (users: User[]): GuestFormState => ({
   nome: "",
   hostId: users[0]?.id ?? "",
-  dataInicio: "",
-  dataFim: "",
+  periodos: [{ dataInicio: "", dataFim: "" }],
 });
 
 function formatDate(value: string) {
@@ -62,13 +60,36 @@ export function GuestsManager({ monthKey, monthLabel, guests, users }: GuestsMan
 
   const userMap = new Map(users.map((user) => [user.id, user.nome]));
   const sortedGuests = useMemo(
-    () => [...guests].sort((a, b) => a.dataInicio.localeCompare(b.dataInicio)),
+    () => [...guests].sort((a, b) => a.periodos[0].dataInicio.localeCompare(b.periodos[0].dataInicio)),
     [guests]
   );
 
   function resetForm() {
     setForm(emptyState(users));
     setEditingId(null);
+  }
+
+  function handlePeriodChange(index: number, field: "dataInicio" | "dataFim", value: string) {
+    setForm((current) => {
+      const newPeriodos = [...current.periodos];
+      newPeriodos[index] = { ...newPeriodos[index], [field]: value };
+      return { ...current, periodos: newPeriodos };
+    });
+  }
+
+  function addPeriod() {
+    setForm((current) => ({
+      ...current,
+      periodos: [...current.periodos, { dataInicio: "", dataFim: "" }],
+    }));
+  }
+
+  function removePeriod(index: number) {
+    if (form.periodos.length === 1) return;
+    setForm((current) => ({
+      ...current,
+      periodos: current.periodos.filter((_, i) => i !== index),
+    }));
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -106,8 +127,7 @@ export function GuestsManager({ monthKey, monthLabel, guests, users }: GuestsMan
     setForm({
       nome: guest.nome,
       hostId: guest.hostId,
-      dataInicio: guest.dataInicio,
-      dataFim: guest.dataFim,
+      periodos: guest.periodos.length > 0 ? guest.periodos : [{ dataInicio: "", dataFim: "" }],
     });
   }
 
@@ -212,35 +232,54 @@ export function GuestsManager({ monthKey, monthLabel, guests, users }: GuestsMan
                 </select>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="guest-start" className="text-sm font-semibold text-foreground">
-                    Data inicio
-                  </Label>
-                  <Input
-                    id="guest-start"
-                    type="date"
-                    value={form.dataInicio}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, dataInicio: event.target.value }))
-                    }
-                    required
-                  />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold text-foreground">Períodos da visita</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addPeriod} disabled={submitting}>
+                    Adicionar periodo
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guest-end" className="text-sm font-semibold text-foreground">
-                    Data fim
-                  </Label>
-                  <Input
-                    id="guest-end"
-                    type="date"
-                    value={form.dataFim}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, dataFim: event.target.value }))
-                    }
-                    required
-                  />
-                </div>
+                
+                {form.periodos.map((periodo, index) => (
+                  <div key={index} className="grid gap-4 sm:grid-cols-2 relative rounded-2xl border border-border/60 bg-background/50 p-4">
+                    {form.periodos.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removePeriod(index)}
+                        className="absolute right-2 top-2 size-6 rounded-full text-muted-foreground hover:text-destructive"
+                        disabled={submitting}
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor={`guest-start-${index}`} className="text-sm font-semibold text-foreground">
+                        Data inicio
+                      </Label>
+                      <Input
+                        id={`guest-start-${index}`}
+                        type="date"
+                        value={periodo.dataInicio}
+                        onChange={(e) => handlePeriodChange(index, "dataInicio", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`guest-end-${index}`} className="text-sm font-semibold text-foreground">
+                        Data fim
+                      </Label>
+                      <Input
+                        id={`guest-end-${index}`}
+                        type="date"
+                        value={periodo.dataFim}
+                        onChange={(e) => handlePeriodChange(index, "dataFim", e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {feedback ? (
@@ -284,12 +323,16 @@ export function GuestsManager({ monthKey, monthLabel, guests, users }: GuestsMan
                       <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         anfitriao: {userMap.get(guest.hostId) ?? guest.hostId}
                       </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {formatDate(guest.dataInicio)} ate {formatDate(guest.dataFim)}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {daysBetween(guest.dataInicio, guest.dataFim)} dia(s)
-                      </p>
+                      <div className="mt-2 space-y-1">
+                        {guest.periodos.map((p, i) => (
+                          <div key={i} className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                            <span>{formatDate(p.dataInicio)} ate {formatDate(p.dataFim)}</span>
+                            <span className="rounded-full bg-background/80 px-2 py-0.5 text-[10px] uppercase">
+                              {daysBetween(p.dataInicio, p.dataFim)} dia(s)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="flex gap-2">

@@ -24,11 +24,15 @@ export const categorySchema = z.object({
   icone: z.string().min(1, "Ícone obrigatório"),
 });
 
+export const guestPeriodSchema = z.object({
+  dataInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato: YYYY-MM-DD"),
+  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato: YYYY-MM-DD"),
+});
+
 export const guestSchema = z.object({
   nome: z.string().min(1, "Nome obrigatório").max(100),
   hostId: z.string().min(1),
-  dataInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato: YYYY-MM-DD"),
-  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato: YYYY-MM-DD"),
+  periodos: z.array(guestPeriodSchema).min(1, "Adicione pelo menos um período"),
 });
 
 export const recurringSchema = z.object({

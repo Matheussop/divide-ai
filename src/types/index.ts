@@ -27,12 +27,16 @@ export interface Expense {
   atualizadoEm: string;
 }
 
+export interface GuestPeriod {
+  dataInicio: string; // YYYY-MM-DD
+  dataFim: string; // YYYY-MM-DD
+}
+
 export interface Guest {
   id: string;
   nome: string;
   hostId: string;
-  dataInicio: string; // YYYY-MM-DD
-  dataFim: string;
+  periodos: GuestPeriod[];
 }
 
 export interface RecurringTemplate {

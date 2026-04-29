@@ -21,12 +21,12 @@ export function overlapDaysInclusive(
 }
 
 export function resolveActiveGuest(guests: Guest[], expenseDate: string) {
-  const candidates = guests.filter(
-    (guest) => expenseDate >= guest.dataInicio && expenseDate <= guest.dataFim
+  const candidates = guests.filter((guest) =>
+    guest.periodos.some((p) => expenseDate >= p.dataInicio && expenseDate <= p.dataFim)
   );
   if (candidates.length === 0) return null;
-  // Prefer the most recent start date when periods overlap.
-  return candidates.sort((a, b) => b.dataInicio.localeCompare(a.dataInicio))[0] ?? null;
+  // Prefer the most recent start date (taking the first period of each guest for sorting)
+  return candidates.sort((a, b) => b.periodos[0].dataInicio.localeCompare(a.periodos[0].dataInicio))[0] ?? null;
 }
 
 export function resolveBestGuestForMonth(guests: Guest[], monthKey: string, visitaId?: string) {
@@ -41,12 +41,15 @@ export function resolveBestGuestForMonth(guests: Guest[], monthKey: string, visi
 
   const overlaps = guests
     .map((guest) => {
-      const start = new Date(`${guest.dataInicio}T00:00:00`);
-      const end = new Date(`${guest.dataFim}T00:00:00`);
-      return { guest, days: overlapDaysInclusive(start, end, monthStart, monthEnd) };
+      const days = guest.periodos.reduce((total, p) => {
+        const start = new Date(`${p.dataInicio}T00:00:00`);
+        const end = new Date(`${p.dataFim}T00:00:00`);
+        return total + overlapDaysInclusive(start, end, monthStart, monthEnd);
+      }, 0);
+      return { guest, days };
     })
     .filter((item) => item.days > 0)
-    .sort((a, b) => b.days - a.days || b.guest.dataInicio.localeCompare(a.guest.dataInicio));
+    .sort((a, b) => b.days - a.days || b.guest.periodos[0].dataInicio.localeCompare(a.guest.periodos[0].dataInicio));
 
   return overlaps[0]?.guest ?? null;
 }
@@ -70,10 +73,14 @@ export function computeVisitorCostForExpense(
   const [year, month] = monthKey.split("-").map(Number);
   const monthStart = new Date(year, month - 1, 1);
   const monthEnd = new Date(year, month - 1, getDaysInMonth(monthKey));
-  const guestStart = new Date(`${guest.dataInicio}T00:00:00`);
-  const guestEnd = new Date(`${guest.dataFim}T00:00:00`);
   const daysInMonth = getDaysInMonth(monthKey);
-  const daysOfVisitInMonth = overlapDaysInclusive(guestStart, guestEnd, monthStart, monthEnd);
+
+  const daysOfVisitInMonth = guest.periodos.reduce((total, p) => {
+    const guestStart = new Date(`${p.dataInicio}T00:00:00`);
+    const guestEnd = new Date(`${p.dataFim}T00:00:00`);
+    return total + overlapDaysInclusive(guestStart, guestEnd, monthStart, monthEnd);
+  }, 0);
+
   if (daysOfVisitInMonth <= 0) return null;
 
   const numberOfResidents = Object.keys(expense.split).length || 2;

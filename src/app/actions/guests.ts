@@ -14,8 +14,7 @@ import type { ActionResult, Guest } from "@/types";
 interface GuestActionInput {
   nome: string;
   hostId: string;
-  dataInicio: string;
-  dataFim: string;
+  periodos: { dataInicio: string; dataFim: string }[];
 }
 
 function revalidateGuestViews() {
@@ -27,8 +26,7 @@ function parseGuestInput(input: GuestActionInput) {
   return guestSchema.safeParse({
     nome: input.nome.trim(),
     hostId: input.hostId,
-    dataInicio: input.dataInicio,
-    dataFim: input.dataFim,
+    periodos: input.periodos,
   });
 }
 
@@ -61,17 +59,18 @@ export async function createGuestAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
   }
 
-  const periodError = validateGuestPeriod(parsed.data.dataInicio, parsed.data.dataFim);
-  if (periodError) {
-    return { success: false, error: periodError };
+  for (const p of parsed.data.periodos) {
+    const periodError = validateGuestPeriod(p.dataInicio, p.dataFim);
+    if (periodError) {
+      return { success: false, error: periodError };
+    }
   }
 
   const guest: Guest = {
     id: `guest-${crypto.randomUUID().slice(0, 10)}`,
     nome: parsed.data.nome,
     hostId: parsed.data.hostId,
-    dataInicio: parsed.data.dataInicio,
-    dataFim: parsed.data.dataFim,
+    periodos: parsed.data.periodos,
   };
 
   await addGuest(resolveMonthKey(monthKeyInput), guest);
@@ -94,16 +93,17 @@ export async function updateGuestAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
   }
 
-  const periodError = validateGuestPeriod(parsed.data.dataInicio, parsed.data.dataFim);
-  if (periodError) {
-    return { success: false, error: periodError };
+  for (const p of parsed.data.periodos) {
+    const periodError = validateGuestPeriod(p.dataInicio, p.dataFim);
+    if (periodError) {
+      return { success: false, error: periodError };
+    }
   }
 
   const updated = await updateGuest(resolveMonthKey(monthKeyInput), guestId, {
     nome: parsed.data.nome,
     hostId: parsed.data.hostId,
-    dataInicio: parsed.data.dataInicio,
-    dataFim: parsed.data.dataFim,
+    periodos: parsed.data.periodos,
   });
 
   if (!updated) {
