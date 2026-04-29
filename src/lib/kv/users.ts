@@ -36,6 +36,11 @@ export async function setUserEmailIndex(
   await setJSON("user-emails", emailIndex);
 }
 
+export async function getResidents(): Promise<User[]> {
+  const users = await getAllUsers();
+  return users.filter((user) => user.role !== "admin");
+}
+
 export async function getDefaultUsers(): Promise<User[]> {
   // Maintaining for backwards compatibility with split logic
   const users = await Promise.all(defaultUserIds.map((id) => getUserById(id)));

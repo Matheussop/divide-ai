@@ -2,7 +2,7 @@ import { ExpensesManager } from "@/components/dashboard/expenses-manager";
 import { getCategories } from "@/lib/kv/categories";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getGuests } from "@/lib/kv/guests";
-import { getDefaultUsers } from "@/lib/kv/users";
+import { getResidents } from "@/lib/kv/users";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
 
 type ExpensesPageProps = {
@@ -15,7 +15,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const monthKey = resolveMonthKey(searchParams?.mes);
   const [categories, users, expenses, guests] = await Promise.all([
     getCategories(),
-    getDefaultUsers(),
+    getResidents(),
     getExpenses(monthKey),
     getGuests(monthKey),
   ]);

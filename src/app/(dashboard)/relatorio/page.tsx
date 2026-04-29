@@ -1,6 +1,6 @@
 import { MonthlyReportPage } from "@/components/dashboard/monthly-report-page";
 import { getCategories } from "@/lib/kv/categories";
-import { getAllUsers } from "@/lib/kv/users";
+import { getResidents } from "@/lib/kv/users";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getGuests } from "@/lib/kv/guests";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";
@@ -19,7 +19,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
   const [expenses, categories, users, guestsThisMonth, guestsPrevMonth] = await Promise.all([
     getExpenses(monthKey),
     getCategories(),
-    getAllUsers(),
+    getResidents(),
     getGuests(monthKey),
     getGuests(previousMonth),
   ]);
