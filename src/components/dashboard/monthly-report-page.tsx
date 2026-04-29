@@ -90,7 +90,7 @@ export function MonthlyReportPage({ monthKey, monthLabel, expenses, categories, 
   }, [expenses, monthKey, guests, users]);
 
   function handleWhatsAppExport() {
-    const text = buildWhatsAppExportText({ monthLabel, expenses, categories, users });
+    const text = buildWhatsAppExportText({ monthKey, monthLabel, expenses, categories, users, guests });
     const url = buildWhatsAppUrl(text);
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -243,4 +243,3 @@ export function MonthlyReportPage({ monthKey, monthLabel, expenses, categories, 
     </div>
   );
 }
-
