@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteLogAction, clearLogsAction } from "@/app/actions/logs";
-import { CalendarRange, Activity, PlusCircle, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { CalendarRange, Activity, PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";

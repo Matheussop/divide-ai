@@ -34,11 +34,6 @@ export function MonthlyReportPage({ monthKey, monthLabel, expenses, categories, 
     [categories]
   );
 
-  const userMap = useMemo(
-    () => new Map(users.map((u) => [u.id, u.nome])),
-    [users]
-  );
-
   const totalSpent = useMemo(() => expenses.reduce((sum, expense) => sum + expense.valor, 0), [expenses]);
 
   const categoryTotals = useMemo(() => {

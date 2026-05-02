@@ -20,6 +20,3 @@ export async function getMonthsWithData(): Promise<string[]> {
   return months.sort().reverse(); // Sort descending
 }
 
-export async function addMonthWithData(month: string): Promise<void> {
-  // Obsoleto: `getMonthsWithData` agora busca dinamicamente as chaves `expenses:*`
-}

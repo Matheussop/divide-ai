@@ -57,15 +57,6 @@ function formatCurrency(valueInCents: number) {
   }).format(valueInCents / 100);
 }
 
-function formatTimestamp(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 function formatExpenseDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   return new Intl.DateTimeFormat("pt-BR", {

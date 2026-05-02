@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { auth } from "@/lib/auth";
-import { getUserById, setUser, deleteUser as deleteUserKv, setUserEmailIndex } from "@/lib/kv/users";
+import { getUserById, setUser, deleteUser as deleteUserKv } from "@/lib/kv/users";
 import { getJSON, setJSON } from "@/lib/redis";
 import type { ActionResult, User } from "@/types";
 

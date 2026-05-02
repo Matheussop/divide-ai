@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getExpenses } from "@/lib/kv/expenses";
 import { getCategories } from "@/lib/kv/categories";
 import { getMonthsWithData } from "@/lib/kv/balances";
-import { getBalance } from "@/lib/kv/balances";
 import { getGuests } from "@/lib/kv/guests";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { formatMonthLabel, resolveMonthKey } from "@/lib/month";

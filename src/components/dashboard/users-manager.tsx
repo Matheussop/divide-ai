@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, ShieldAlert, UserCog, Pencil, Trash2, Plus } from "lucide-react";
+import { Shield, ShieldAlert, UserCog, Pencil, Trash2 } from "lucide-react";
 import { createUserAction, updateUserAction, deleteUserAction } from "@/app/actions/users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
