@@ -1,3 +1,4 @@
+import { computeMonthlyBreakdown } from "@/lib/finance/monthly-breakdown";
 import { computeVisitorCostsForExpense } from "@/lib/finance/visits";
 import type { Category, Expense, Guest, User } from "@/types";
 
@@ -27,6 +28,7 @@ export function buildWhatsAppExportText(args: {
   const categoryMap = new Map(args.categories.map((category) => [category.id, category.nome]));
   const userMap = new Map(args.users.map((user) => [user.id, user.nome]));
   const guestMap = new Map(args.guests.map((guest) => [guest.id, guest.nome]));
+  const breakdown = computeMonthlyBreakdown(args.expenses, args.monthKey, args.guests, args.users);
 
   const lines: string[] = [];
   lines.push(`*DivideAí - ${args.monthLabel}*`);
@@ -61,6 +63,43 @@ export function buildWhatsAppExportText(args: {
   if (totalVisitorCost > 0) {
     lines.push(`- Total de repasses por visitas: ${formatCurrency(totalVisitorCost)}`);
   }
+
+  if (args.users.length === 2) {
+    const [userA, userB] = args.users;
+    const netBaseA = (breakdown.paid[userA.id] ?? 0) - (breakdown.baseOwed[userA.id] ?? 0);
+    const netBaseB = (breakdown.paid[userB.id] ?? 0) - (breakdown.baseOwed[userB.id] ?? 0);
+    const repasseA = breakdown.visitorCost[userA.id] ?? 0;
+    const repasseB = breakdown.visitorCost[userB.id] ?? 0;
+    const finalNetA = breakdown.net[userA.id] ?? 0;
+    const finalNetB = breakdown.net[userB.id] ?? 0;
+
+    lines.push("");
+    lines.push("*Acerto entre moradores*");
+
+    if (netBaseA === netBaseB) {
+      lines.push("- Base entre moradoras (apos retirar o total das visitas): empatado");
+    } else {
+      const basePayer = netBaseA < 0 ? userA : userB;
+      const baseReceiver = netBaseA < 0 ? userB : userA;
+      const baseAmount = Math.abs(netBaseA < 0 ? netBaseA : netBaseB);
+      lines.push(`- Base entre moradoras (apos retirar o total das visitas): ${basePayer.nome} paga ${formatCurrency(baseAmount)} para ${baseReceiver.nome}`);
+    }
+
+    if (repasseA > 0 || repasseB > 0) {
+      lines.push(`- Responsabilidade por visitas de ${userA.nome}: ${formatCurrency(repasseA)}`);
+      lines.push(`- Responsabilidade por visitas de ${userB.nome}: ${formatCurrency(repasseB)}`);
+    }
+
+    if (finalNetA === finalNetB) {
+      lines.push("- Acerto final: sem diferença entre moradores");
+    } else {
+      const finalPayer = finalNetA < 0 ? userA : userB;
+      const finalReceiver = finalNetA < 0 ? userB : userA;
+      const finalAmount = Math.abs(finalNetA < 0 ? finalNetA : finalNetB);
+      lines.push(`- Acerto final: ${finalPayer.nome} paga ${formatCurrency(finalAmount)} para ${finalReceiver.nome}`);
+    }
+  }
+
   lines.push("");
   lines.push("*Lançamentos*");
 

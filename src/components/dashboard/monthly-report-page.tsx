@@ -5,9 +5,9 @@ import { Download, MessageCircle, PieChart, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { computeMonthlyBreakdown } from "@/lib/finance/monthly-breakdown";
 import { buildWhatsAppExportText, buildWhatsAppUrl } from "@/lib/reports/whatsapp";
 import { buildMonthlyExcelWorkbook, workbookToBase64 } from "@/lib/reports/excel";
-import { computeOwedByUserForExpense, computeVisitorCostsForExpense } from "@/lib/finance/visits";
 import type { Category, Expense, User, Guest } from "@/types";
 
 interface MonthlyReportPageProps {
@@ -55,38 +55,7 @@ export function MonthlyReportPage({ monthKey, monthLabel, expenses, categories, 
   );
 
   const stepByStep = useMemo(() => {
-    const paid: Record<string, number> = {};
-    const baseOwed: Record<string, number> = {};
-    const visitorCost: Record<string, number> = {};
-    const net: Record<string, number> = {};
-
-    for (const expense of expenses) {
-      paid[expense.pagadorId] = (paid[expense.pagadorId] ?? 0) + expense.valor;
-
-      const visitors = computeVisitorCostsForExpense(expense, monthKey, guests);
-      for (const visitor of visitors) {
-        visitorCost[visitor.hostId] = (visitorCost[visitor.hostId] ?? 0) + visitor.visitorCost;
-      }
-
-      const owed = computeOwedByUserForExpense(expense, monthKey, guests);
-      for (const [userId, amount] of Object.entries(owed)) {
-        // Strip the repasse portion from the user's base consumption display
-        const extraForVisit = visitors
-          .filter((v) => v.hostId === userId)
-          .reduce((sum, v) => sum + v.visitorCost, 0);
-        baseOwed[userId] = (baseOwed[userId] ?? 0) + (amount - extraForVisit);
-      }
-    }
-
-    for (const user of users) {
-      const p = paid[user.id] ?? 0;
-      const b = baseOwed[user.id] ?? 0;
-      const v = visitorCost[user.id] ?? 0;
-      const totalOwed = b + v;
-      net[user.id] = p - totalOwed;
-    }
-
-    return { paid, baseOwed, visitorCost, net };
+    return computeMonthlyBreakdown(expenses, monthKey, guests, users);
   }, [expenses, monthKey, guests, users]);
 
   function handleWhatsAppExport() {
